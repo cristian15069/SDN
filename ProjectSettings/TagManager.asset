@@ -8,7 +8,7 @@ TagManager:
   - Default
   - TransparentFX
   - Ignore Raycast
-  - 
+  - suelo
   - Water
   - UI
   - 
@@ -44,8 +44,32 @@ TagManager:
   - name: background
     uniqueID: 2175025717
     locked: 0
+  - name: suelo
+    uniqueID: 2152549105
+    locked: 0
+  - name: cajas
+    uniqueID: 1623429685
+    locked: 0
+  - name: caja_doble
+    uniqueID: 370293115
+    locked: 0
+  - name: maqExp
+    uniqueID: 4034325889
+    locked: 0
+  - name: vidas
+    uniqueID: 2809816449
+    locked: 0
+  - name: posteEne
+    uniqueID: 1727539311
+    locked: 0
   - name: kai
     uniqueID: 636147211
+    locked: 0
+  - name: subsuelo
+    uniqueID: 538667783
+    locked: 0
+  - name: weapon
+    uniqueID: 3669361549
     locked: 0
   m_RenderingLayers:
   - Default
