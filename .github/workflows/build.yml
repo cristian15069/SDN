@@ -1,8 +1,8 @@
-name: Compilación Manual de Unity
+name:  Compilación Manual de Unity
 
 on:
   push:
-    branches: [ "main" ] 
+    branches: [ "main" ] # Se activa solo con pushes a la rama 'main'
 
 jobs:
   build:
@@ -31,9 +31,9 @@ jobs:
 
       # 4. Activar la licencia usando el Secreto que creaste
       - name: Activate Unity License
-        uses: game-ci/unity-activate@v4 
+        uses: game-ci/unity-activate@v3 
         with:
-          license: ${{ secrets.UNITY_LICENSE }} # ¡Aquí usa la llave!
+          license: ${{ secrets.UNITY_LICENSE }} 
 
       # 5. Compilación Manual
       - name: Build Project (Windows)
