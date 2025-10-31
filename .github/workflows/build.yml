@@ -1,8 +1,8 @@
-name: 🛠️ Compilación Manual de Unity
+name: Compilación Manual de Unity
 
 on:
   push:
-    branches: [ "main" ] # Se activa solo con pushes a la rama 'main'
+    branches: [ "main" ] 
 
 jobs:
   build:
@@ -14,7 +14,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4 
 
-      # 2. Cargar la caché de la Librería (para que sea más rápido en el futuro)
+      # 2. Cargar la caché de la Librería
       - name: Cache Library
         uses: actions/cache@v4 
         with:
@@ -25,15 +25,15 @@ jobs:
 
       # 3. Instalar tu versión exacta de Unity
       - name: Install Unity
-        uses: game-ci/unity-installer@v3
+        uses: game-ci/unity-installer@v3 # Esta estaba bien
         with:
-          unityVersion: 6000.2.6f2 # ⚠️ ¡Esta es tu versión!
+          unityVersion: 6000.2.6f2 
 
       # 4. Activar la licencia usando el Secreto que creaste
       - name: Activate Unity License
-        uses: game-ci/unity-activate@v4 
+        uses: game-ci/unity-activate@v3 
         with:
-          license: ${{ secrets.UNITY_LICENSE }} # ¡Aquí usa la llave!
+          license: ${{ secrets.UNITY_LICENSE }} 
 
       # 5. Compilación Manual
       - name: Build Project (Windows)
