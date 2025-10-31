@@ -1,4 +1,4 @@
-name: 🛠️ Compilación Manual de Unity
+name:  Compilación Manual de Unity
 
 on:
   push:
@@ -8,7 +8,7 @@ jobs:
   build:
     name: Compilar para Windows 64-bit
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4 
@@ -22,12 +22,12 @@ jobs:
             Library-
 
       - name: Install Unity
-        uses: game-ci/unity-installer@v3 
+        uses: game-ci/unity-installer@v3
         with:
           unityVersion: 6000.2.6f2
 
       - name: Activate Unity License
-        uses: game-ci/unity-activate@v3 
+        uses: game-ci/unity-activate@v3
         with:
           license: ${{ secrets.UNITY_LICENSE }}
 
@@ -41,7 +41,7 @@ jobs:
             -buildTarget StandaloneWindows64 \
             -logFile build.log \
             -customBuildPath build/Windows/MiJuego.exe
-      
+
       - name: Upload build log on failure
         if: failure()
         uses: actions/upload-artifact@v4 
