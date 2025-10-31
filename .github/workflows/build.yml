@@ -1,63 +1,62 @@
-name:  Compilación Manual de Unity (con Docker)
+name: Unity CI/CD Build
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [main]
 
 jobs:
   build:
-    name: Compilar para Windows 64-bit
     runs-on: ubuntu-latest
-    
-    permissions:
-      packages: read
-      
-    steps:
-      # 1. Clonar tu repositorio
-      - name: Checkout
-        uses: actions/checkout@v4 
 
-      # 2. Cargar la caché de la Librería
-      - name: Cache Library
-        uses: actions/cache@v4 
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Cache para acelerar compilaciones
+      - name: Cache Unity Library
+        uses: actions/cache@v3
         with:
           path: Library
-          key: Library-2022.3.62f3-${{ hashFiles('Packages/**', 'ProjectSettings/**') }}
+          key: Library-${{ hashFiles('**/Assets/**', '**/Packages/**', '**/ProjectSettings/**') }}
           restore-keys: |
-            Library-2022.3.62f3-
+            Library-
 
-      # 3. Compilar usando la imagen de Docker
-      - name: Build Project (Windows)
-        env:
-          UNITY_LICENSE_CONTENT: ${{ secrets.UNITY_LICENSE }}
-        
+      # Limpiar variables antiguas
+      - name: Clear activation variables
+        run: unset UNITY_EMAIL UNITY_PASSWORD UNITY_SERIAL UNITY_LICENSING_SERVER || true
+
+      # Debug para verificar si el secret existe
+      - name: Check UNITY_LICENSE presence
         run: |
-          docker run \
-            -v $GITHUB_WORKSPACE:/project \
-            -w /project \
-            ghcr.io/game-ci/editor:ubuntu-2022.3.62f3-base-1 \
-            /bin/bash -c "
-              mkdir -p build/Windows &&
-              /opt/unity/Editor/Unity \
-                -batchmode \
-                -quit \
-                -projectPath . \
-                -logFile build.log \
-                -buildTarget StandaloneWindows64 \
-                -customBuildPath build/Windows/MiJuego.exe
-            "
+          if [ -z "${UNITY_LICENSE}" ]; then
+            echo "❌ UNITY_LICENSE is NOT available"
+            exit 1
+          else
+            echo "✅ UNITY_LICENSE secret is present"
+          fi
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
 
-      # 4. Mostrar el log si falla
-      - name: Upload build log on failure
-        if: failure()
-        uses: actions/upload-artifact@v4 
-        with:
-          name: build-log
-          path: build.log
+      # Limpia licencias antiguas
+      - name: Clear old Unity license cache
+        run: rm -rf ~/.local/share/unity3d/Unity/ || true
 
-      # 5. Subir el .exe como un Artefacto
-      - name: Upload Build Artifact
-        uses: actions/upload-artifact@v4 
+      # Compilar el juego
+      - name: Build Unity project
+        uses: game-ci/unity-builder@v4
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
         with:
-          name: build-Windows
-          path: build/Windows/
+          unityVersion: 2022.3.61f1
+          targetPlatform: StandaloneWindows64
+          buildName: MyGame
+          buildsPath: build
+          projectPath: .
+          versioning: Semantic
+
+      # Subir artefacto del build
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: MyGame-Build
+          path: build/StandaloneWindows64/
