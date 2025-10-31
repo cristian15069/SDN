@@ -25,15 +25,15 @@ jobs:
 
       # 3. Instalar tu versión exacta de Unity
       - name: Install Unity
-        uses: game-ci/unity-installer@v3 # Esta estaba bien
+        uses: game-ci/unity-installer@v3 
         with:
           unityVersion: 6000.2.6f2 
 
       # 4. Activar la licencia usando el Secreto que creaste
       - name: Activate Unity License
-        uses: game-ci/unity-activate@v3 
+        uses: game-ci/unity-activate@v4 
         with:
-          license: ${{ secrets.UNITY_LICENSE }} 
+          license: ${{ secrets.UNITY_LICENSE }} # ¡Aquí usa la llave!
 
       # 5. Compilación Manual
       - name: Build Project (Windows)
