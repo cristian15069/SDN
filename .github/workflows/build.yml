@@ -19,19 +19,19 @@ jobs:
         uses: actions/cache@v4 
         with:
           path: Library
-          key: Library-${{ hashFiles('Packages/**', 'ProjectSettings/**') }}
+          key: Library-6000.0.61f1-${{ hashFiles('Packages/**', 'ProjectSettings/**') }}
           restore-keys: |
-            Library-
+            Library-6000.0.61f1-
 
+      # 3. Compilar usando la imagen de Docker de la versión LTS
       - name: Build Project (Windows)
         env:
           UNITY_LICENSE_CONTENT: ${{ secrets.UNITY_LICENSE }}
-        
         run: |
           docker run \
             -v $GITHUB_WORKSPACE:/project \
             -w /project \
-            gameci/editor:ubuntu-6000.2.6f2-base-1 \
+            gameci/editor:ubuntu-6000.0.61f1-base-1 \
             /bin/bash -c "
               mkdir -p build/Windows &&
               /opt/unity/Editor/Unity \
