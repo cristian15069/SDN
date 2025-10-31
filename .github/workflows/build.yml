@@ -1,4 +1,4 @@
-name: Compilación Manual de Unity (con Docker)
+name: 🛠️ Compilación Manual de Unity (con Docker)
 
 on:
   push:
