@@ -1,4 +1,4 @@
-name: 🛠️ Compilación Manual de Unity (con Docker)
+name: Compilación Manual de Unity (con Docker)
 
 on:
   push:
@@ -9,6 +9,9 @@ jobs:
     name: Compilar para Windows 64-bit
     runs-on: ubuntu-latest
     
+    permissions:
+      packages: read
+      
     steps:
       # 1. Clonar tu repositorio
       - name: Checkout
@@ -23,6 +26,7 @@ jobs:
           restore-keys: |
             Library-2022.3.62f3-
 
+      # 3. Compilar usando la imagen de Docker
       - name: Build Project (Windows)
         env:
           UNITY_LICENSE_CONTENT: ${{ secrets.UNITY_LICENSE }}
