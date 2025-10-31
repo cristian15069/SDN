@@ -1,0 +1,63 @@
+name: 🛠️ Compilación Manual de Unity
+
+on:
+  push:
+    branches: [ "main" ] # Se activa solo con pushes a la rama 'main'
+
+jobs:
+  build:
+    name: Compilar para Windows 64-bit
+    runs-on: ubuntu-latest
+    
+    steps:
+      # 1. Clonar tu repositorio
+      - name: Checkout
+        uses: actions/checkout@v4 
+
+      # 2. Cargar la caché de la Librería (para que sea más rápido en el futuro)
+      - name: Cache Library
+        uses: actions/cache@v4 
+        with:
+          path: Library
+          key: Library-${{ hashFiles('Packages/**', 'ProjectSettings/**') }}
+          restore-keys: |
+            Library-
+
+      # 3. Instalar tu versión exacta de Unity
+      - name: Install Unity
+        uses: game-ci/unity-installer@v3
+        with:
+          unityVersion: 6000.2.6f2 # ⚠️ ¡Esta es tu versión!
+
+      # 4. Activar la licencia usando el Secreto que creaste
+      - name: Activate Unity License
+        uses: game-ci/unity-activate@v4 
+        with:
+          license: ${{ secrets.UNITY_LICENSE }} # ¡Aquí usa la llave!
+
+      # 5. Compilación Manual
+      - name: Build Project (Windows)
+        run: |
+          mkdir -p build/Windows 
+          $UNITY_EDITOR_PATH \
+            -batchmode \
+            -quit \
+            -projectPath . \
+            -buildTarget StandaloneWindows64 \
+            -logFile build.log \
+            -customBuildPath build/Windows/MiJuego.exe
+      
+      # 6. Mostrar el log si falla
+      - name: Upload build log on failure
+        if: failure()
+        uses: actions/upload-artifact@v4 
+        with:
+          name: build-log
+          path: build.log
+
+      # 7. Subir el .exe como un Artefacto
+      - name: Upload Build Artifact
+        uses: actions/upload-artifact@v4 
+        with:
+          name: build-Windows
+          path: build/Windows/
