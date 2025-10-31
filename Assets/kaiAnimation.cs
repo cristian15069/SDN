@@ -145,7 +145,7 @@ public class kaiAnimation : MonoBehaviour
         LoseLife();
     }
 
-    void LoseLife()
+    public void LoseLife()
     {
         currentHealth--;
         UpdateHealthUI();

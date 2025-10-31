@@ -1,0 +1,23 @@
+name: 🔑 Obtener archivo de licencia de Unity
+
+on:
+  workflow_dispatch: # Te permite ejecutarlo manualmente
+
+jobs:
+  activation:
+    name: Obtener archivo .alf
+    runs-on: ubuntu-latest
+    steps:
+      # 1. Pide el archivo de activación (.alf)
+      - name: Request activation file
+        id: get-alf
+        uses: game-ci/unity-request-activation-file@v2
+        with:
+          unityVersion: 2023.2.1f1 # ⚠️ ¡CAMBIA ESTO a tu versión exacta!
+
+      # 2. Sube el .alf para que puedas descargarlo
+      - name: Upload .alf
+        uses: actions/upload-artifact@v3
+        with:
+          name: Unity-Activation-File
+          path: ${{ steps.get-alf.outputs.filePath }}
