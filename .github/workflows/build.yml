@@ -1,4 +1,4 @@
-name:  Compilación Manual de Unity (con Docker)
+name: 🛠️ Compilación Manual de Unity (con Docker)
 
 on:
   push:
@@ -9,6 +9,9 @@ jobs:
     name: Compilar para Windows 64-bit
     runs-on: ubuntu-latest
     
+    permissions:
+      packages: read
+      
     steps:
       # 1. Clonar tu repositorio
       - name: Checkout
@@ -19,18 +22,22 @@ jobs:
         uses: actions/cache@v4 
         with:
           path: Library
-          key: Library-${{ hashFiles('Packages/**', 'ProjectSettings/**') }}
+          key: Library-2022.3.62f3-${{ hashFiles('Packages/**', 'ProjectSettings/**') }}
           restore-keys: |
-            Library-
+            Library-2022.3.62f3-
 
-      # 3. ¡EL PASO NUEVO! Compilar usando Docker
+      # 3. Compilar usando la imagen de Docker
       - name: Build Project (Windows)
+        env:
+          UNITY_LICENSE_VAR: ${{ secrets.UNITY_LICENSE }}
+        
         run: |
           docker run \
-            -e UNITY_LICENSE_CONTENT=${{ secrets.UNITY_LICENSE }} \
+            -e UNITY_LICENSE_CONTENT="$UNITY_LICENSE_VAR" \
             -v $GITHUB_WORKSPACE:/project \
             -w /project \
-            gameci/editor:ubuntu-2022.3.62f3-base-1 \
+
+            ghcr.io/game-ci/editor:ubuntu-2022.3.62f3-base-1 \
             /bin/bash -c "
               mkdir -p build/Windows &&
               /opt/unity/Editor/Unity \
