@@ -1,4 +1,4 @@
-name:  Compilación Manual de Unity (con Docker)
+name: 🛠️ Compilación Manual de Unity (con Docker)
 
 on:
   push:
@@ -26,12 +26,11 @@ jobs:
       - name: Build Project (Windows)
         env:
           UNITY_LICENSE_CONTENT: ${{ secrets.UNITY_LICENSE }}
-        
         run: |
           docker run \
             -v $GITHUB_WORKSPACE:/project \
             -w /project \
-            gameci/editor:ubuntu-2022.3.62f3-base-1 \
+            ghcr.io/game-ci/editor:ubuntu-2022.3.62f3-base-1 \
             /bin/bash -c "
               mkdir -p build/Windows &&
               /opt/unity/Editor/Unity \
