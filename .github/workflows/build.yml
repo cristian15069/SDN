@@ -1,4 +1,4 @@
-name: 🛠️ Compilación Manual de Unity
+name: 🛠️ Compilación Manual de Unity (con Docker)
 
 on:
   push:
@@ -10,38 +10,39 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
+      # 1. Clonar tu repositorio
       - name: Checkout
         uses: actions/checkout@v4 
 
+      # 2. Cargar la caché de la Librería
       - name: Cache Library
         uses: actions/cache@v4 
         with:
           path: Library
-          key: Library-2022.3.62f3-${{ hashFiles('Packages/**', 'ProjectSettings/**') }}
+          key: Library-${{ hashFiles('Packages/**', 'ProjectSettings/**') }}
           restore-keys: |
-            Library-2022.3.62f3-
+            Library-
 
-      - name: Install Unity (Versión 2022)
-        uses: game-ci/unity-installer@v3
-        with:
-          unityVersion: 2022.3.62f3
-
-      - name: Activate Unity License
-        uses: game-ci/unity-activate@v3
-        with:
-          license: ${{ secrets.UNITY_LICENSE }}
-
+      # 3. Compilar usando Docker
       - name: Build Project (Windows)
         run: |
-          mkdir -p build/Windows 
-          $UNITY_EDITOR_PATH \
-            -batchmode \
-            -quit \
-            -projectPath . \
-            -buildTarget StandaloneWindows64 \
-            -logFile build.log \
-            -customBuildPath build/Windows/MiJuego.exe
-      
+          docker run \
+            -e UNITY_LICENSE_CONTENT=${{ secrets.UNITY_LICENSE }} \
+            -v $GITHUB_WORKSPACE:/project \
+            -w /project \
+            gameci/editor:ubuntu-2022.3.62f3-base-1 \
+            /bin/bash -c "
+              mkdir -p build/Windows &&
+              /opt/unity/Editor/Unity \
+                -batchmode \
+                -quit \
+                -projectPath . \
+                -logFile build.log \
+                -buildTarget StandaloneWindows64 \
+                -customBuildPath build/Windows/MiJuego.exe
+            "
+
+      # 4. Mostrar el log si falla
       - name: Upload build log on failure
         if: failure()
         uses: actions/upload-artifact@v4 
@@ -49,6 +50,7 @@ jobs:
           name: build-log
           path: build.log
 
+      # 5. Subir el .exe como un Artefacto
       - name: Upload Build Artifact
         uses: actions/upload-artifact@v4 
         with:
