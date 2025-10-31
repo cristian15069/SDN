@@ -17,7 +17,7 @@ jobs:
 
       # 2. Sube el .alf para que puedas descargarlo
       - name: Upload .alf
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4 # ⚠️ ¡AQUÍ ESTÁ EL CAMBIO! (v3 -> v4)
         with:
           name: Unity-Activation-File
           path: ${{ steps.get-alf.outputs.filePath }}
