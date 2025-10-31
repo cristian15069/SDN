@@ -28,9 +28,6 @@ jobs:
 
       # 3. Compilar usando la imagen de Docker
       - name: Build Project (Windows)
-        # ⚠️ ¡ARREGLO #2!
-        # Ponemos la licencia en el 'entorno' del *paso*
-        # La imagen Docker está diseñada para buscar esta variable
         env:
           UNITY_LICENSE_CONTENT: ${{ secrets.UNITY_LICENSE }}
         
