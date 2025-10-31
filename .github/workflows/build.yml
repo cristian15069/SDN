@@ -1,4 +1,4 @@
-name: 🛠️ Compilación Manual de Unity (con Docker)
+name:  Compilación Manual de Unity (con Docker)
 
 on:
   push:
@@ -28,15 +28,16 @@ jobs:
 
       # 3. Compilar usando la imagen de Docker
       - name: Build Project (Windows)
+        # ⚠️ ¡ARREGLO #2!
+        # Ponemos la licencia en el 'entorno' del *paso*
+        # La imagen Docker está diseñada para buscar esta variable
         env:
-          UNITY_LICENSE_VAR: ${{ secrets.UNITY_LICENSE }}
+          UNITY_LICENSE_CONTENT: ${{ secrets.UNITY_LICENSE }}
         
         run: |
           docker run \
-            -e UNITY_LICENSE_CONTENT="$UNITY_LICENSE_VAR" \
             -v $GITHUB_WORKSPACE:/project \
             -w /project \
-
             ghcr.io/game-ci/editor:ubuntu-2022.3.62f3-base-1 \
             /bin/bash -c "
               mkdir -p build/Windows &&
