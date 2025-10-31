@@ -1,4 +1,4 @@
-name: Compilación Manual de Unity (con Docker)
+name: 🛠️ Compilación Manual de Unity (con Docker)
 
 on:
   push:
@@ -23,11 +23,13 @@ jobs:
           restore-keys: |
             Library-
 
-      # 3. Compilar usando Docker
       - name: Build Project (Windows)
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
         run: |
           docker run \
-            -e UNITY_LICENSE_CONTENT=${{ secrets.UNITY_LICENSE }} \
+            # Pasa la variable local (entre comillas) a Docker
+            -e UNITY_LICENSE_CONTENT="$UNITY_LICENSE" \
             -v $GITHUB_WORKSPACE:/project \
             -w /project \
             gameci/editor:ubuntu-6000.2.6f2-base-1 \
