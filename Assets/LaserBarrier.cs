@@ -17,15 +17,13 @@ public class LaserBarrier : MonoBehaviour
     private bool isOn = false; 
     private float timer;
     private float damageTimer; 
-    
+
     void Start()
     {
         spriteRenderer = GetComponent<SpriteRenderer>();
-        // Encuentra el segundo BoxCollider2D (el del láser)
-        // Asume que el primer collider es el de los postes.
+     
         BoxCollider2D[] colliders = GetComponents<BoxCollider2D>();
         if (colliders.Length > 1) {
-            // Buscamos el que sea Trigger, que será el del láser
             foreach(BoxCollider2D col in colliders) {
                 if (col.isTrigger) {
                     laserCollider = col;
@@ -40,7 +38,6 @@ public class LaserBarrier : MonoBehaviour
             return;
         }
 
-        // Empezamos con el láser apagado y configuramos el primer ciclo
         SetLaserState(false);
         timer = inactiveTime; 
     }
