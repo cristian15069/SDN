@@ -3,21 +3,21 @@ using UnityEngine;
 public class LaserBarrier : MonoBehaviour
 {
     [Header("Sprites de la Barrera")]
-    public Sprite spriteOn;  // Arrastra el sprite de la barrera encendida
-    public Sprite spriteOff; // Arrastra el sprite de la barrera apagada
+    public Sprite spriteOn; 
+    public Sprite spriteOff;
     private SpriteRenderer spriteRenderer;
 
     [Header("Configuración del Láser")]
-    public float activeTime = 2f;    // Tiempo que el láser está encendido
-    public float inactiveTime = 1.5f; // Tiempo que el láser está apagado
-    public int damage = 1;           // Daño que inflige al jugador
-    public float damageInterval = 0.5f; // Cada cuánto tiempo hace daño si el jugador permanece dentro
+    public float activeTime = 2f;    
+    public float inactiveTime = 1.5f; 
+    public int damage = 1;           
+    public float damageInterval = 0.5f; 
 
-    private BoxCollider2D laserCollider; // Referencia al collider del láser
-    private bool isOn = false; // Estado actual del láser
+    private BoxCollider2D laserCollider;
+    private bool isOn = false; 
     private float timer;
-    private float damageTimer; // Para controlar el daño cada 'damageInterval'
-
+    private float damageTimer; 
+    
     void Start()
     {
         spriteRenderer = GetComponent<SpriteRenderer>();
