@@ -3,35 +3,38 @@ using UnityEngine;
 public class RechargeStation : MonoBehaviour
 {
     [Header("Estado de la Estación")]
-    private bool isCharged = true; // Empieza cargada por defecto
+    private bool isCharged = true;
     private bool isPlayerNear = false;
     private kaiAnimation playerScript; 
 
     [Header("Sprites de la Estación")]
-    public Sprite spriteOn;  // Arrastra aquí tu sprite de "encendido"
-    public Sprite spriteOff; // Arrastra aquí tu sprite de "apagado"
-    private SpriteRenderer mySpriteRenderer; // Referencia a su propio sprite
+    public Sprite spriteOn; 
+    public Sprite spriteOff;
+    private SpriteRenderer mySpriteRenderer;
 
     [Header("UI de Interacción")]
-    public GameObject rechargeIndicator; // Arrastra aquí el objeto "IndicadorRecarga"
+    public GameObject rechargeIndicator; 
+
+    [Header("Botón Móvil")]
+    public GameObject mobileRechargeButton;
 
     void Start()
     {
-        // Obtener el componente SpriteRenderer de ESTE objeto
         mySpriteRenderer = GetComponent<SpriteRenderer>();
         if (mySpriteRenderer == null) {
             Debug.LogError("RechargeStation no tiene SpriteRenderer!");
         }
 
-        // 1. Asegurarse de que empieza "encendido"
         isCharged = true;
         mySpriteRenderer.sprite = spriteOn;
 
-        // 2. Asegurarse de que el indicador "Recarga Aquí" empieza oculto
         if (rechargeIndicator != null)
         {
             rechargeIndicator.SetActive(false);
         }
+
+        if(mobileRechargeButton != null)
+            mobileRechargeButton.SetActive(false);
     }
 
     private void OnTriggerEnter2D(Collider2D other)
@@ -41,10 +44,13 @@ public class RechargeStation : MonoBehaviour
             isPlayerNear = true;
             playerScript = other.GetComponent<kaiAnimation>();
 
-            // ¡NUEVO! Solo mostrar el indicador si la estación AÚN tiene carga
-            if (isCharged && rechargeIndicator != null)
+            if (isCharged)
             {
-                rechargeIndicator.SetActive(true);
+                if (rechargeIndicator != null)
+                    rechargeIndicator.SetActive(true);
+                
+                if (mobileRechargeButton != null)
+                    mobileRechargeButton.SetActive(true);
             }
         }
     }
@@ -56,37 +62,35 @@ public class RechargeStation : MonoBehaviour
             isPlayerNear = false;
             playerScript = null;
 
-            // ¡NUEVO! Siempre ocultar el indicador cuando el jugador se va
             if (rechargeIndicator != null)
-            {
                 rechargeIndicator.SetActive(false);
-            }
+            
+            if (mobileRechargeButton != null)
+                mobileRechargeButton.SetActive(false);
         }
     }
 
     void Update()
     {
-        // ¡CONDICIÓN MODIFICADA!
-        // ¿Está el jugador cerca? ¿Está la estación CARGADA? ¿Presionó [E]?
         if (isPlayerNear && isCharged && Input.GetKeyDown(KeyCode.E))
         {
-            if (playerScript != null)
-            {
-                // 1. Llama al jugador para recargar
-                playerScript.RechargeBattery();
+            DoRecharge();
+        }
+    }
 
-                // 2. Gasta la estación (ya no se puede volver a usar)
-                isCharged = false;
+    public void DoRecharge()
+    {
+        if (isPlayerNear && isCharged && playerScript != null)
+        {
+            playerScript.RechargeBattery();
+            isCharged = false;
+            mySpriteRenderer.sprite = spriteOff;
 
-                // 3. Cambia el sprite de la estación a "apagado"
-                mySpriteRenderer.sprite = spriteOff;
-
-                // 4. Oculta el indicador "Recarga Aquí" permanentemente
-                if (rechargeIndicator != null)
-                {
-                    rechargeIndicator.SetActive(false);
-                }
-            }
+            if (rechargeIndicator != null)
+                rechargeIndicator.SetActive(false);
+            
+            if (mobileRechargeButton != null)
+                mobileRechargeButton.SetActive(false);
         }
     }
 }

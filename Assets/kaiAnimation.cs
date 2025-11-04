@@ -20,6 +20,7 @@ public class kaiAnimation : MonoBehaviour
     public Transform groundCheck;
     public float groundCheckRadius = 0.2f;
     public LayerMask groundLayer;
+    private bool isFallingToDeath = false;
 
     [Header("Ajustes de Suelo")]
     public float extraGravity = 2f;
@@ -37,19 +38,32 @@ public class kaiAnimation : MonoBehaviour
     [Header("Caída y Reinicio")]
     public float fallThresholdY = -10f;
 
+    [Header("Reaparición")]
+    public Transform respawnPoint;
+    
     [Header("Arma")]
     private bool hasWeapon = false;
-    public Image weaponIconUI;
+    public Image weaponIconUI; 
+    public Image batteryMeterUI;
 
     [Header("Disparo")]
     public GameObject electroshockPrefab; 
     public Transform firePoint;          
-    // public float projectileSpeed = 15f; 
-
+    
     [Header("Batería del Arma")]
     public int maxAmmo = 10; 
     private int currentAmmo;
-    public Sprite[] batterySprites;
+    public Sprite[] batterySprites; 
+
+    [Header("Controles Táctiles Manuales")]
+    public Canvas myCanvas; 
+    public RectTransform moveLeftButtonRect;  
+    public RectTransform moveRightButtonRect; 
+    public RectTransform jumpButtonRect;      
+    public RectTransform fireButtonRect;      
+
+    private Camera canvasCamera; 
+    private bool isMoving = false;
     
     void Start()
     {
@@ -74,27 +88,104 @@ public class kaiAnimation : MonoBehaviour
         {
             weaponIconUI.enabled = false;
         }
+        
+        if(batteryMeterUI != null){
+            batteryMeterUI.enabled = false;
+        }
+
+        if (myCanvas.renderMode == RenderMode.ScreenSpaceOverlay)
+        {
+            canvasCamera = null;
+        }
         else
         {
-            Debug.LogWarning("Weapon Icon UI no asignado en el Inspector!");
+            canvasCamera = myCanvas.worldCamera;
         }
     }
 
     void Update()
     {
+        HandleTouchInput(); 
+
         if (groundCheck == null) return;
 
         Vector2 groundCheckPos = groundCheck.position + Vector3.down * groundCheckOffset;
         isGrounded = Physics2D.OverlapCircle(groundCheckPos, groundCheckRadius, groundLayer);
 
+        if (isGrounded)
+        {
+            isFallingToDeath = false;
+        }
+
         anim.SetFloat("speed", Mathf.Abs(moveInput));
         anim.SetBool("isGrounded", isGrounded); 
 
-        if (transform.position.y < fallThresholdY)
+        if (transform.position.y < fallThresholdY && !isFallingToDeath)
         {
+            isFallingToDeath = true; 
             HandleFall();
         }
     }
+
+    void HandleTouchInput()
+    {
+        bool pressingJump = false;
+        bool pressingFire = false;
+        bool pressingLeft = false;
+        bool pressingRight = false;
+
+        if (Input.touchCount > 0)
+        {
+            for (int i = 0; i < Input.touchCount; i++)
+            {
+                Vector2 touchPos = Input.GetTouch(i).position;
+                if (CheckTouchOnRect(touchPos, moveLeftButtonRect)) pressingLeft = true;
+                if (CheckTouchOnRect(touchPos, moveRightButtonRect)) pressingRight = true;
+                if (CheckTouchOnRect(touchPos, jumpButtonRect) && Input.GetTouch(i).phase == UnityEngine.TouchPhase.Began) pressingJump = true;
+                if (CheckTouchOnRect(touchPos, fireButtonRect) && Input.GetTouch(i).phase == UnityEngine.TouchPhase.Began) pressingFire = true;
+            }
+        }
+        else if (Input.GetMouseButton(0)) 
+        {
+            Vector2 mousePos = Input.mousePosition;
+            if (CheckTouchOnRect(mousePos, moveLeftButtonRect)) pressingLeft = true;
+            if (CheckTouchOnRect(mousePos, moveRightButtonRect)) pressingRight = true;
+            if (CheckTouchOnRect(mousePos, jumpButtonRect) && Input.GetMouseButtonDown(0)) pressingJump = true;
+            if (CheckTouchOnRect(mousePos, fireButtonRect) && Input.GetMouseButtonDown(0)) pressingFire = true;
+        }
+
+        if (pressingLeft)
+        {
+            OnPointerDownMove(-1); 
+            isMoving = true;
+        }
+        else if (pressingRight)
+        {
+            OnPointerDownMove(1);
+            isMoving = true;
+        }
+        else if (isMoving) 
+        {
+            isMoving = false;
+            OnPointerUpMove();
+        }
+
+        if (pressingJump)
+        {
+            OnTouchJump();
+        }
+        if (pressingFire)
+        {
+            OnTouchFire();
+        }
+    }
+
+    bool CheckTouchOnRect(Vector2 touchPosition, RectTransform rect)
+    {
+        if (rect == null) return false;
+        return RectTransformUtility.RectangleContainsScreenPoint(rect, touchPosition, canvasCamera);
+    }
+
 
     void LateUpdate()
     {
@@ -153,12 +244,36 @@ public class kaiAnimation : MonoBehaviour
         if (currentHealth <= 0)
         {
             Debug.Log("GAME OVER");
-            currentHealth = maxHealth;
+            currentHealth = maxHealth; 
             SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
         }
         else
         {
-            SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+            Debug.Log("Vida perdida. Vidas restantes: " + currentHealth);
+            RespawnPlayer();
+        }
+    }
+
+    void RespawnPlayer()
+    {
+        if (respawnPoint != null)
+        {
+            transform.position = respawnPoint.position;
+            rb.linearVelocity = Vector2.zero; 
+            isFallingToDeath = false;
+        }
+        else
+        {
+            Debug.LogError("¡No se ha asignado un Respawn Point en el Inspector!");
+        }
+    }
+
+    public void SetRespawnPoint(Transform newPoint)
+    {
+        if (respawnPoint != newPoint)
+        {
+            respawnPoint = newPoint;
+            Debug.Log("¡Nuevo punto de reaparición guardado en: " + newPoint.name);
         }
     }
 
@@ -220,6 +335,10 @@ public class kaiAnimation : MonoBehaviour
         {
             weaponIconUI.enabled = true;
         }
+
+        if (batteryMeterUI != null)
+            batteryMeterUI.enabled = true;
+
         UpdateBatteryUI();
         Debug.Log("¡Arma Recogida!");
     }
@@ -228,18 +347,15 @@ public class kaiAnimation : MonoBehaviour
     {
         if (!value.isPressed) return; 
 
-        Debug.Log("OnFire: Botón presionado.");
-
         if (hasWeapon && currentAmmo > 0)
         {
             currentAmmo--;
-            UpdateBatteryUI();
+            UpdateBatteryUI(); 
             
             anim.SetTrigger("fire"); 
             Debug.Log("OnFire: Tiene arma, animación 'fire' disparada.");
 
-            
-        if (electroshockPrefab != null && firePoint != null)
+            if (electroshockPrefab != null && firePoint != null)
             {
                 GameObject projectileGO = Instantiate(electroshockPrefab, firePoint.position, firePoint.rotation);
                 ElectroshockProjectile projectile = projectileGO.GetComponent<ElectroshockProjectile>();
@@ -255,7 +371,7 @@ public class kaiAnimation : MonoBehaviour
                 Debug.LogWarning("Electroshock Prefab o Fire Point no asignados!");
             }
         }
-    else if (hasWeapon && currentAmmo <= 0)
+        else if (hasWeapon && currentAmmo <= 0)
         {
             Debug.Log("¡Batería vacía! *click* *click*");
         }
@@ -263,57 +379,86 @@ public class kaiAnimation : MonoBehaviour
 
     public void RechargeBattery()
     {
-        // Si la batería ya está llena, no hacemos nada y salimos.
         if (currentAmmo == maxAmmo) 
         {
             Debug.Log("La batería ya está llena.");
             return; 
         }
 
-        // Si no está llena, la rellenamos.
         Debug.Log("¡Recargando batería!");
         currentAmmo = maxAmmo;
         
-        // Actualizamos la UI para que muestre el sprite de batería llena
         UpdateBatteryUI();
-        
-        // Aquí podrías añadir un sonido de "recarga exitosa"
-        // audioSource.PlayOneShot(rechargeSound);
     }
-
+    
     void UpdateBatteryUI()
     {
-        // Seguridad: Salir si no hay UI o los sprites no están asignados
-        if (weaponIconUI == null || batterySprites.Length < 4)
+        if (batteryMeterUI == null || batterySprites.Length < 4)
         {
-            Debug.LogWarning("Weapon Icon UI o Battery Sprites no están configurados.");
+            Debug.LogWarning("Battery Meter UI o Battery Sprites no están configurados.");
             return;
         }
 
-        // Calculamos el porcentaje de batería
-        // (float) es MUY importante para que la división dé decimales
         float ammoPercentage = (float)currentAmmo / maxAmmo;
 
-        // Decidimos qué sprite mostrar
         if (currentAmmo == 0)
         {
-            // Vacío
-            weaponIconUI.sprite = batterySprites[3];
+            batteryMeterUI.sprite = batterySprites[3];
         }
         else if (ammoPercentage <= 0.33f)
         {
-            // Casi Vacío (menos de 1/3)
-            weaponIconUI.sprite = batterySprites[2];
+            batteryMeterUI.sprite = batterySprites[2];
         }
         else if (ammoPercentage <= 0.75f)
         {
-            // Medio (entre 1/3 y 3/4)
-            weaponIconUI.sprite = batterySprites[1];
+            batteryMeterUI.sprite = batterySprites[1];
         }
         else
         {
-            // Lleno (más de 3/4)
-            weaponIconUI.sprite = batterySprites[0];
+            batteryMeterUI.sprite = batterySprites[0];
+        }
+    }
+
+    public void OnPointerDownMove(float direction)
+    {
+        moveInput = direction;
+    }
+
+    public void OnPointerUpMove()
+    {
+        moveInput = 0f;
+    }
+
+    public void OnTouchJump()
+    {
+        if (isGrounded)
+        {
+            rb.linearVelocity = new Vector2(rb.linearVelocity.x, jumpForce);
+        }
+    }
+
+    public void OnTouchFire()
+    {
+        if (hasWeapon && currentAmmo > 0) 
+        {
+            currentAmmo--; 
+            UpdateBatteryUI(); 
+            anim.SetTrigger("fire"); 
+            
+            if (electroshockPrefab != null && firePoint != null)
+            {
+                GameObject projectileGO = Instantiate(electroshockPrefab, firePoint.position, firePoint.rotation);
+                ElectroshockProjectile projectile = projectileGO.GetComponent<ElectroshockProjectile>();
+                if (projectile != null)
+                {
+                    Vector2 direction = isFacingRight ? Vector2.right : Vector2.left;
+                    projectile.SetDirection(direction);
+                }
+            }
+        }
+        else if (hasWeapon && currentAmmo <= 0)
+        {
+            Debug.Log("¡Batería vacía! *click* *click*");
         }
     }
 }

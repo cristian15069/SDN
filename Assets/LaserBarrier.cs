@@ -60,11 +60,11 @@ public class LaserBarrier : MonoBehaviour
         isOn = state;
         if (spriteRenderer != null)
         {
-            spriteRenderer.sprite = isOn ? spriteOn : spriteOff; // Cambia el sprite
+            spriteRenderer.sprite = isOn ? spriteOn : spriteOff; 
         }
         if (laserCollider != null)
         {
-            laserCollider.enabled = isOn; // Activa o desactiva el collider de daño
+            laserCollider.enabled = isOn; 
         }
 
         Debug.Log("Láser está " + (isOn ? "ENCENDIDO" : "APAGADO"));
@@ -72,20 +72,18 @@ public class LaserBarrier : MonoBehaviour
 
     private void OnTriggerStay2D(Collider2D other)
     {
-        // Esta función se llama MIENTRAS el jugador está dentro del Trigger del láser
         if (isOn && other.CompareTag("Player"))
         {
             damageTimer -= Time.deltaTime;
             if (damageTimer <= 0)
             {
-                // Busca el script de vida del jugador
                 kaiAnimation player = other.GetComponent<kaiAnimation>();
                 if (player != null)
                 {
-                    player.LoseLife(); // Le quitamos vida al jugador
+                    player.LoseLife(); 
                     Debug.Log("Jugador recibió " + damage + " de daño por láser.");
                 }
-                damageTimer = damageInterval; // Resetea el temporizador de daño
+                damageTimer = damageInterval; 
             }
         }
     }
