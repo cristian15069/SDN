@@ -82,7 +82,8 @@ public class RechargeStation : MonoBehaviour
     {
         if (isPlayerNear && isCharged && playerScript != null)
         {
-            playerScript.RechargeBattery();
+            playerScript.RechargeCurrentWeapon(); 
+            
             isCharged = false;
             mySpriteRenderer.sprite = spriteOff;
 

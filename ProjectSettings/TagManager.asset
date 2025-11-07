@@ -9,13 +9,13 @@ TagManager:
   - Default
   - TransparentFX
   - Ignore Raycast
-  - suelo
+  - 
   - Water
   - UI
+  - suelo
   - weapon
-  - 
-  - 
-  - 
+  - player
+  - Enemy
   - 
   - 
   - 
@@ -68,6 +68,9 @@ TagManager:
     locked: 0
   - name: kai
     uniqueID: 636147211
+    locked: 0
+  - name: zombie
+    uniqueID: 4245897971
     locked: 0
   - name: weapon
     uniqueID: 3669361549

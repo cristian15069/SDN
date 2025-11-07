@@ -7,9 +7,16 @@ public class ElectroshockProjectile : MonoBehaviour
     public float lifetime = 2f;
 
     private Vector2 moveDirection;
+    private SpriteRenderer sr;
 
     void Start()
     {
+        sr = GetComponent<SpriteRenderer>();
+        if (sr != null)
+        {
+            sr.color = Color.white; 
+            sr.sortingOrder = 20; 
+        }
         Destroy(gameObject, lifetime);
     }
 
@@ -25,20 +32,17 @@ public class ElectroshockProjectile : MonoBehaviour
 
     private void OnTriggerEnter2D(Collider2D other)
     {
+        if (other.CompareTag("Player")) return;
+
         if (other.CompareTag("Enemy"))
         {
-            
-            EnemyHealth enemy = other.GetComponent<EnemyHealth>();
+            ZombieController enemy = other.GetComponent<ZombieController>();
             if (enemy != null)
             {
                enemy.TakeDamage(damage);
             }
-            else
-            {
-                Debug.LogWarning(gameObject.name + " [PROYECTIL] Hit ENEMY, but no EnemyHealth script was found on " + other.name);
-            }
         }
-
+        
         Destroy(gameObject);
     }
 }
