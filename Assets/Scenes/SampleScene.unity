@@ -224,7 +224,7 @@ Transform:
   m_GameObject: {fileID: 29869028}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 98.22632, y: 4.0043216, z: 0}
+  m_LocalPosition: {x: 98.247604, y: 3.323082, z: 0}
   m_LocalScale: {x: 0.55, y: 0.55, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -6641,6 +6641,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Electroshock_Prefab
       objectReference: {fileID: 0}
+    - target: {fileID: 6907082037517676859, guid: 44efb90b06352f942a3cb07d82fad745, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 7117798465880550324, guid: 44efb90b06352f942a3cb07d82fad745, type: 3}
       propertyPath: m_Color.a
       value: 1
@@ -6933,6 +6937,14 @@ PrefabInstance:
       propertyPath: zombieController
       value: 
       objectReference: {fileID: 724950648}
+    - target: {fileID: 1949436027782841882, guid: ea4677c8c58bf7d4ebd8d6bd9d8c4def, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -0.07
+      objectReference: {fileID: 0}
+    - target: {fileID: 1949436027782841882, guid: ea4677c8c58bf7d4ebd8d6bd9d8c4def, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0.93
+      objectReference: {fileID: 0}
     - target: {fileID: 4478603362613459315, guid: ea4677c8c58bf7d4ebd8d6bd9d8c4def, type: 3}
       propertyPath: m_Size.x
       value: 1.99
@@ -7003,7 +7015,7 @@ PrefabInstance:
       objectReference: {fileID: 1889807929}
     - target: {fileID: 6423995560294904140, guid: ea4677c8c58bf7d4ebd8d6bd9d8c4def, type: 3}
       propertyPath: attackBoxSize.x
-      value: 1.98
+      value: 2.95
       objectReference: {fileID: 0}
     - target: {fileID: 6423995560294904140, guid: ea4677c8c58bf7d4ebd8d6bd9d8c4def, type: 3}
       propertyPath: groundDetection
