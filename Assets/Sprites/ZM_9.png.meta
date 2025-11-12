@@ -1,22 +1,22 @@
 fileFormatVersion: 2
-guid: bf6d16a76fd53ce46a5b3b7c9e78aa2d
+guid: 38e45d0fbd54dfd4d9e82fa531883958
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: -133850052990710859
-    second: "indicador de da\xF1o_0"
+      213: -4510646419895984605
+    second: ZM_9_0
   - first:
-      213: 6998987450067609461
-    second: "indicador de da\xF1o_1"
+      213: 4254832296116856820
+    second: ZM_9_1
   - first:
-      213: 6393401300665358876
-    second: "indicador de da\xF1o_2"
+      213: -1527033530310799536
+    second: ZM_9_2
   - first:
-      213: 315767719733644102
-    second: "indicador de da\xF1o_3"
+      213: -3320011837206499436
+    second: ZM_9_3
   - first:
-      213: 6541624718875242934
-    second: "indicador de da\xF1o_4"
+      213: -7691894838967954306
+    second: ZM_9_4
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -63,7 +63,7 @@ TextureImporter:
   spriteMeshType: 1
   alignment: 0
   spritePivot: {x: 0.5, y: 0.5}
-  spritePixelsToUnits: 200
+  spritePixelsToUnits: 170
   spriteBorder: {x: 0, y: 0, z: 0, w: 0}
   spriteGenerateFallbackPhysicsShape: 1
   alphaUsage: 1
@@ -125,13 +125,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: "indicador de da\xF1o_0"
+      name: ZM_9_0
       rect:
         serializedVersion: 2
-        x: 3
-        y: 2
-        width: 497
-        height: 497
+        x: 9
+        y: 9
+        width: 350
+        height: 672
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -140,20 +140,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 5bb42520618742ef0800000000000000
-      internalID: -133850052990710859
+      spriteID: 32e56b2caf6f661c0800000000000000
+      internalID: -4510646419895984605
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: "indicador de da\xF1o_1"
+      name: ZM_9_1
       rect:
         serializedVersion: 2
-        x: 241
-        y: 354
-        width: 22
-        height: 13
+        x: 13
+        y: 501
+        width: 8
+        height: 10
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -162,20 +162,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 57762bce006612160800000000000000
-      internalID: 6998987450067609461
+      spriteID: 4f7a7e42e633c0b30800000000000000
+      internalID: 4254832296116856820
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: "indicador de da\xF1o_2"
+      name: ZM_9_2
       rect:
         serializedVersion: 2
-        x: 80
-        y: 112
-        width: 300
-        height: 233
+        x: 0
+        y: 450
+        width: 6
+        height: 6
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -184,20 +184,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: c1adda8fb9ce9b850800000000000000
-      internalID: 6393401300665358876
+      spriteID: 05fc6b14813eecae0800000000000000
+      internalID: -1527033530310799536
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: "indicador de da\xF1o_3"
+      name: ZM_9_3
       rect:
         serializedVersion: 2
-        x: 213
-        y: 99
-        width: 14
-        height: 23
+        x: 12
+        y: 447
+        width: 6
+        height: 7
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -206,20 +206,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 64b424e6115d16400800000000000000
-      internalID: 315767719733644102
+      spriteID: 49fe63103d2fce1d0800000000000000
+      internalID: -3320011837206499436
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: "indicador de da\xF1o_4"
+      name: ZM_9_4
       rect:
         serializedVersion: 2
-        x: 459
-        y: 15
-        width: 27
-        height: 26
+        x: 13
+        y: 441
+        width: 6
+        height: 6
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -228,8 +228,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 6b13976d50588ca50800000000000000
-      internalID: 6541624718875242934
+      spriteID: e7497a9b566e04590800000000000000
+      internalID: -7691894838967954306
       vertices: []
       indices: 
       edges: []
@@ -248,11 +248,11 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      "indicador de da\xF1o_0": -133850052990710859
-      "indicador de da\xF1o_1": 6998987450067609461
-      "indicador de da\xF1o_2": 6393401300665358876
-      "indicador de da\xF1o_3": 315767719733644102
-      "indicador de da\xF1o_4": 6541624718875242934
+      ZM_9_0: -4510646419895984605
+      ZM_9_1: 4254832296116856820
+      ZM_9_2: -1527033530310799536
+      ZM_9_3: -3320011837206499436
+      ZM_9_4: -7691894838967954306
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
