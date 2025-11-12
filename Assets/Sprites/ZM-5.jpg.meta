@@ -1,22 +1,10 @@
 fileFormatVersion: 2
-guid: bf6d16a76fd53ce46a5b3b7c9e78aa2d
+guid: 04a432f20c831214ab67842300eb3018
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: -133850052990710859
-    second: "indicador de da\xF1o_0"
-  - first:
-      213: 6998987450067609461
-    second: "indicador de da\xF1o_1"
-  - first:
-      213: 6393401300665358876
-    second: "indicador de da\xF1o_2"
-  - first:
-      213: 315767719733644102
-    second: "indicador de da\xF1o_3"
-  - first:
-      213: 6541624718875242934
-    second: "indicador de da\xF1o_4"
+      213: -2901474055150398361
+    second: ZM-5_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -63,7 +51,7 @@ TextureImporter:
   spriteMeshType: 1
   alignment: 0
   spritePivot: {x: 0.5, y: 0.5}
-  spritePixelsToUnits: 200
+  spritePixelsToUnits: 230
   spriteBorder: {x: 0, y: 0, z: 0, w: 0}
   spriteGenerateFallbackPhysicsShape: 1
   alphaUsage: 1
@@ -125,13 +113,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: "indicador de da\xF1o_0"
+      name: ZM-5_0
       rect:
         serializedVersion: 2
-        x: 3
-        y: 2
-        width: 497
-        height: 497
+        x: 1
+        y: 3
+        width: 372
+        height: 654
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -140,96 +128,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 5bb42520618742ef0800000000000000
-      internalID: -133850052990710859
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: "indicador de da\xF1o_1"
-      rect:
-        serializedVersion: 2
-        x: 241
-        y: 354
-        width: 22
-        height: 13
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 57762bce006612160800000000000000
-      internalID: 6998987450067609461
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: "indicador de da\xF1o_2"
-      rect:
-        serializedVersion: 2
-        x: 80
-        y: 112
-        width: 300
-        height: 233
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: c1adda8fb9ce9b850800000000000000
-      internalID: 6393401300665358876
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: "indicador de da\xF1o_3"
-      rect:
-        serializedVersion: 2
-        x: 213
-        y: 99
-        width: 14
-        height: 23
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 64b424e6115d16400800000000000000
-      internalID: 315767719733644102
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: "indicador de da\xF1o_4"
-      rect:
-        serializedVersion: 2
-        x: 459
-        y: 15
-        width: 27
-        height: 26
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 6b13976d50588ca50800000000000000
-      internalID: 6541624718875242934
+      spriteID: 7649fb138b4ebb7d0800000000000000
+      internalID: -2901474055150398361
       vertices: []
       indices: 
       edges: []
@@ -248,11 +148,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      "indicador de da\xF1o_0": -133850052990710859
-      "indicador de da\xF1o_1": 6998987450067609461
-      "indicador de da\xF1o_2": 6393401300665358876
-      "indicador de da\xF1o_3": 315767719733644102
-      "indicador de da\xF1o_4": 6541624718875242934
+      ZM-5_0: -2901474055150398361
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

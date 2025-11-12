@@ -45,27 +45,34 @@ public class ZombieController : MonoBehaviour
 
         FindPlayer(); 
 
-        if (player != null)
-        {
-            float distanceToPlayer = Vector2.Distance(playerCheck.position, player.position);
+        // --- LÓGICA DE ESTADO MEJORADA ---
+        bool canSeePlayer = (player != null);
+        bool canAttackPlayer = false;
 
-            if (distanceToPlayer <= attackBoxSize.x) 
+        if (canSeePlayer && playerCheck != null)
+        {
+            // Revisa si el jugador está EN RANGO DE ATAQUE
+            Collider2D playerInAttackRange = Physics2D.OverlapBox(playerCheck.position, attackBoxSize, 0, playerLayer);
+            if (playerInAttackRange != null)
             {
-                AttackPlayer();
-            }
-            else if (distanceToPlayer <= detectionBoxSize.x)
-            {
-                ChasePlayer();
-            }
-            else
-            {
-                Patrol();
+                canAttackPlayer = true;
             }
         }
-        else
+        
+        // Ahora decidimos qué hacer:
+        if (canAttackPlayer)
+        {
+            AttackPlayer();
+        }
+        else if (canSeePlayer) // Si te veo, pero no te puedo atacar...
+        {
+            ChasePlayer();
+        }
+        else // Si no te veo...
         {
             Patrol();
         }
+        // --- FIN DE LA LÓGICA ---
 
         if(anim != null)
         {
@@ -120,7 +127,7 @@ public class ZombieController : MonoBehaviour
         if (collision.contacts.Length > 0)
         {
             float normalX = collision.contacts[0].normal.x;
-            if (Mathf.Abs(normalX) > 0.5f)
+            if (Mathf.Abs(normalX) > 0.3f)
             {
                 if (normalX < 0 && movingRight)
                 {
@@ -170,15 +177,12 @@ public class ZombieController : MonoBehaviour
             isAttacking = true;
             if(anim != null) anim.SetTrigger("attack"); 
             
-            // Seguridad: si la animación falla en llamar al evento, esto lo libera después de 1s
             StartCoroutine(ResetAttackState(1.0f));
         }
     }
 
-    // --- FUNCIONES PARA EVENTOS DE ANIMACIÓN ---
     public void DealDamageFromAnimation()
     {
-        // Esta función DEBE ser llamada por un Evento en la animación Zombie_Attack
         if (playerCheck == null) return;
         Collider2D playerHit = Physics2D.OverlapBox(playerCheck.position, attackBoxSize, 0, playerLayer);
         if (playerHit != null)
@@ -193,15 +197,13 @@ public class ZombieController : MonoBehaviour
 
     public void OnAttackAnimationComplete()
     {
-        // Esta función DEBE ser llamada por un Evento al FINAL de Zombie_Attack
         isAttacking = false;
     }
-    // ------------------------------------------
 
     private IEnumerator ResetAttackState(float delay)
     {
         yield return new WaitForSeconds(delay);
-        if (isAttacking) isAttacking = false; // Solo resetea si aún estaba atacando
+        if (isAttacking) isAttacking = false; 
     }
     
     protected void Flip()
@@ -235,7 +237,7 @@ public class ZombieController : MonoBehaviour
         }
         else
         {
-            StartCoroutine(ResetHitState(0.5f)); // Aturdido por 0.5s
+            StartCoroutine(ResetHitState(0.3f)); 
         }
     }
     
