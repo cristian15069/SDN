@@ -25,7 +25,7 @@ Transform:
   m_GameObject: {fileID: 91081807455154291}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.35, y: 1.05, z: 0}
+  m_LocalPosition: {x: 0.68, y: 0.62, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -60,7 +60,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: -1, y: 1, z: 1}
+  m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 6348965432308467269}
@@ -157,7 +157,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5e47c1896a707284eb7ee01ff126bc6f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AnimationEventBridge
-  zombieController: {fileID: 0}
+  zombieController: {fileID: 6423995560294904140}
 --- !u!1 &3459468095536607871
 GameObject:
   m_ObjectHideFlags: 0
@@ -319,7 +319,7 @@ BoxCollider2D:
   m_UsedByEffector: 0
   m_CompositeOperation: 0
   m_CompositeOrder: 0
-  m_Offset: {x: 0, y: 0}
+  m_Offset: {x: 0.62, y: 0}
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
     pivot: {x: 0.5, y: 0.5}
@@ -345,18 +345,21 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ZombieController
   anim: {fileID: 6915761390188145131}
   spriteTransform: {fileID: 6600851252329842240}
-  moveSpeed: 2
+  attackSound: {fileID: 8300000, guid: e57bb8a7737c48c49b015dfed0938228, type: 3}
+  hitSound: {fileID: 8300000, guid: 9307baafce49fa34383851f1b69ba6ed, type: 3}
+  dieSound: {fileID: 8300000, guid: 13426d73b62f05e468e0039afb9e162f, type: 3}
+  moveSpeed: 4
   maxHealth: 3
   playerLayer:
     serializedVersion: 2
     m_Bits: 256
-  deathEffectPrefab: {fileID: 6907082037517676859, guid: 44efb90b06352f942a3cb07d82fad745, type: 3}
-  detectionBoxSize: {x: 5, y: 2}
-  attackBoxSize: {x: 1.61, y: 1}
+  deathEffectPrefab: {fileID: 2327174028243196082, guid: 75a8d461a2d6e574893632655cfbbc08, type: 3}
+  detectionBoxSize: {x: 10, y: 2}
+  attackBoxSize: {x: 2.5, y: 1.18}
   playerCheck: {fileID: 1949436027782841882}
   groundDetection: {fileID: 2397250785570887668}
   groundCheckDistance: 0.5
   groundLayer:
     serializedVersion: 2
     m_Bits: 64
-  attackCooldown: 1.5
+  attackCooldown: 2.5

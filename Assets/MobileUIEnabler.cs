@@ -4,7 +4,7 @@ public class MobileUIEnabler : MonoBehaviour
 {
     void Awake()
     {
-        if (Application.isMobilePlatform)
+        if (Application.isMobilePlatform )
         {
             gameObject.SetActive(true);
         }

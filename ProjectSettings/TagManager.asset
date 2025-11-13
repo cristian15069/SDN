@@ -78,7 +78,7 @@ TagManager:
   - name: fire
     uniqueID: 761427249
     locked: 0
-  - name: New vLayer 12
+  - name: button
     uniqueID: 556185983
     locked: 0
   m_RenderingLayers:
