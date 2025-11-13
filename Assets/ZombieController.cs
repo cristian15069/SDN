@@ -6,6 +6,12 @@ public class ZombieController : MonoBehaviour
     protected Rigidbody2D rb;
     public Animator anim;
     public Transform spriteTransform;
+    protected AudioSource audioSource;
+
+    [Header("Sonidos")] 
+    public AudioClip attackSound;
+    public AudioClip hitSound;
+    public AudioClip dieSound;
     
     [Header("Configuración General")]
     public float moveSpeed = 2f;
@@ -35,8 +41,12 @@ public class ZombieController : MonoBehaviour
     void Start()
     {
         rb = GetComponent<Rigidbody2D>();
+
+        audioSource = GetComponent<AudioSource>();
+        if (audioSource == null) audioSource = gameObject.AddComponent<AudioSource>();
+
         currentHealth = maxHealth;
-        rb.freezeRotation = true; // Evita que se caiga de lado
+        rb.freezeRotation = true; 
     }
 
     void Update()
@@ -45,13 +55,12 @@ public class ZombieController : MonoBehaviour
 
         FindPlayer(); 
 
-        // --- LÓGICA DE ESTADO MEJORADA ---
+
         bool canSeePlayer = (player != null);
         bool canAttackPlayer = false;
 
         if (canSeePlayer && playerCheck != null)
         {
-            // Revisa si el jugador está EN RANGO DE ATAQUE
             Collider2D playerInAttackRange = Physics2D.OverlapBox(playerCheck.position, attackBoxSize, 0, playerLayer);
             if (playerInAttackRange != null)
             {
@@ -59,20 +68,18 @@ public class ZombieController : MonoBehaviour
             }
         }
         
-        // Ahora decidimos qué hacer:
         if (canAttackPlayer)
         {
             AttackPlayer();
         }
-        else if (canSeePlayer) // Si te veo, pero no te puedo atacar...
+        else if (canSeePlayer) 
         {
             ChasePlayer();
         }
-        else // Si no te veo...
+        else 
         {
             Patrol();
         }
-        // --- FIN DE LA LÓGICA ---
 
         if(anim != null)
         {
@@ -176,6 +183,7 @@ public class ZombieController : MonoBehaviour
             lastAttackTime = Time.time;
             isAttacking = true;
             if(anim != null) anim.SetTrigger("attack"); 
+            PlaySound(attackSound);
             
             StartCoroutine(ResetAttackState(1.0f));
         }
@@ -230,6 +238,7 @@ public class ZombieController : MonoBehaviour
         rb.linearVelocity = Vector2.zero;
         
         if(anim != null) anim.SetTrigger("hit"); 
+        PlaySound(hitSound);
         
         if (currentHealth <= 0)
         {
@@ -253,6 +262,8 @@ public class ZombieController : MonoBehaviour
         isDying = true;
         
         if(anim != null) anim.SetTrigger("die"); 
+
+        PlaySound(dieSound);
         
         rb.linearVelocity = Vector2.zero;
         rb.simulated = false; 
@@ -268,6 +279,14 @@ public class ZombieController : MonoBehaviour
         }
         
         Destroy(gameObject, 3f); 
+    }
+
+    protected void PlaySound(AudioClip clip)
+    {
+        if (clip != null && audioSource != null)
+        {
+            audioSource.PlayOneShot(clip);
+        }
     }
 
     protected virtual void OnDrawGizmosSelected()

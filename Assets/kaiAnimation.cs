@@ -12,6 +12,7 @@ public class Weapon
     public Sprite weaponIcon;
     public Sprite[] batterySprites;
     public bool isOwned = false;
+    public AudioClip shootSound;
 }
 
 public class kaiAnimation : MonoBehaviour
@@ -19,6 +20,11 @@ public class kaiAnimation : MonoBehaviour
     private Rigidbody2D rb;
     public Animator anim;
     public Transform spriteTransform;
+    
+    [Header("Sonidos")]
+    public AudioSource shootAudioSource; // Tu AudioSource original para disparos
+    public AudioSource walkAudioSource;  // Un NUEVO AudioSource para caminar
+    public AudioClip walkSound;          // El archivo .wav o .mp3 de tus pasos
 
     [Header("Movimiento")]
     public float moveSpeed = 7f;
@@ -58,9 +64,16 @@ public class kaiAnimation : MonoBehaviour
     public RectTransform moveRightButtonRect;
     public RectTransform jumpButtonRect;
     public RectTransform fireButtonRect;
+    public RectTransform pickupWeaponButtonRect;
+    public RectTransform rechargeButtonRect;
+    public RectTransform vendingButtonRect;
 
     private Camera canvasCamera;
     private bool isMoving = false;
+    
+    private WeaponPickup currentPickupScript;
+    private RechargeStation currentRechargeScript;
+    private VendingMachine currentVendingScript;
 
     [Header("Sistema de Armas")]
     public Transform firePoint;
@@ -74,6 +87,47 @@ public class kaiAnimation : MonoBehaviour
     void Start()
     {
         rb = GetComponent<Rigidbody2D>();
+        rb.freezeRotation = true;
+
+        // --- LÓGICA DE AUDIO AJUSTADA ---
+        // Buscamos los 2 AudioSource
+        AudioSource[] sources = GetComponents<AudioSource>();
+        if (sources.Length > 0)
+        {
+            shootAudioSource = sources[0]; // El primero es para disparos
+        }
+        if (sources.Length > 1)
+        {
+            walkAudioSource = sources[1]; // El segundo es para caminar
+        }
+
+        // Si te faltan, los creamos por seguridad y te avisamos
+        if (shootAudioSource == null) 
+        {
+            Debug.LogWarning("Faltaba 1er AudioSource (disparos), creando uno.");
+            shootAudioSource = gameObject.AddComponent<AudioSource>();
+        }
+        if (walkAudioSource == null)
+        {
+            Debug.LogWarning("Faltaba 2do AudioSource (caminar), creando uno.");
+            walkAudioSource = gameObject.AddComponent<AudioSource>();
+        }
+
+        // Configura el altavoz de caminar
+        if (walkSound != null)
+        {
+            walkAudioSource.clip = walkSound;
+            walkAudioSource.loop = true;
+            walkAudioSource.playOnAwake = false;
+        }
+        else
+        {
+            Debug.LogWarning("No se ha asignado un 'Walk Sound' en el Inspector.");
+        }
+        
+        shootAudioSource.playOnAwake = false;
+        // --- FIN LÓGICA DE AUDIO ---
+
 
         if (spriteTransform == null) { Debug.LogError("Sprite Transform no asignado en " + this.name); this.enabled = false; }
         if (anim == null) { Debug.LogError("Animator no encontrado en los hijos de " + this.name); this.enabled = false; }
@@ -81,13 +135,11 @@ public class kaiAnimation : MonoBehaviour
         if (rb == null) { Debug.LogError("Rigidbody2D no encontrado en " + this.name); this.enabled = false; }
 
         rb.interpolation = RigidbodyInterpolation2D.Interpolate;
-        rb.freezeRotation = true;
 
         if (currentHealth == -1)
         {
             currentHealth = maxHealth;
         }
-
         UpdateHealthUI();
 
         if (myCanvas.renderMode == RenderMode.ScreenSpaceOverlay)
@@ -100,10 +152,8 @@ public class kaiAnimation : MonoBehaviour
         }
 
         currentAmmoCounts = new int[allWeapons.Length];
-
         weaponIconUI.enabled = false;
         batteryMeterUI.enabled = false;
-
         currentWeaponIndex = -1;
 
         for (int i = 0; i < allWeapons.Length; i++)
@@ -111,7 +161,6 @@ public class kaiAnimation : MonoBehaviour
             if (allWeapons[i].isOwned)
             {
                 currentAmmoCounts[i] = allWeapons[i].maxAmmo;
-
                 if (currentWeaponIndex == -1)
                 {
                     currentWeaponIndex = i;
@@ -124,6 +173,7 @@ public class kaiAnimation : MonoBehaviour
     void Update()
     {
         HandleTouchInput();
+        HandleWalkSound(); // <-- ¡LÓGICA DE SONIDO AÑADIDA!
 
         if (groundCheck == null) return;
 
@@ -145,22 +195,54 @@ public class kaiAnimation : MonoBehaviour
         }
     }
 
+    // --- ¡NUEVA FUNCIÓN DE SONIDO! ---
+    void HandleWalkSound()
+    {
+        if (walkAudioSource == null) return;
+
+        bool isWalkingOnGround = (Mathf.Abs(moveInput) > 0.1f && isGrounded);
+
+        if (isWalkingOnGround)
+        {
+            if (!walkAudioSource.isPlaying)
+            {
+                walkAudioSource.Play();
+            }
+        }
+        else
+        {
+            if (walkAudioSource.isPlaying)
+            {
+                walkAudioSource.Stop();
+            }
+        }
+    }
+
     void HandleTouchInput()
     {
         bool pressingJump = false;
         bool pressingFire = false;
         bool pressingLeft = false;
         bool pressingRight = false;
+        bool pressingPickup = false;
+        bool pressingRecharge = false;
+        bool pressingVending = false;
 
         if (Input.touchCount > 0)
         {
             for (int i = 0; i < Input.touchCount; i++)
             {
                 Vector2 touchPos = Input.GetTouch(i).position;
+                UnityEngine.TouchPhase phase = UnityEngine.Input.GetTouch(i).phase;
+
                 if (CheckTouchOnRect(touchPos, moveLeftButtonRect)) pressingLeft = true;
                 if (CheckTouchOnRect(touchPos, moveRightButtonRect)) pressingRight = true;
-                if (CheckTouchOnRect(touchPos, jumpButtonRect) && Input.GetTouch(i).phase == UnityEngine.TouchPhase.Began) pressingJump = true;
-                if (CheckTouchOnRect(touchPos, fireButtonRect) && Input.GetTouch(i).phase == UnityEngine.TouchPhase.Began) pressingFire = true;
+                if (CheckTouchOnRect(touchPos, jumpButtonRect) && phase == UnityEngine.TouchPhase.Began) pressingJump = true;
+                if (CheckTouchOnRect(touchPos, fireButtonRect) && phase == UnityEngine.TouchPhase.Began) pressingFire = true;
+                
+                if (CheckTouchOnRect(touchPos, pickupWeaponButtonRect) && phase == UnityEngine.TouchPhase.Began) pressingPickup = true;
+                if (CheckTouchOnRect(touchPos, rechargeButtonRect) && phase == UnityEngine.TouchPhase.Began) pressingRecharge = true;
+                if (CheckTouchOnRect(touchPos, vendingButtonRect) && phase == UnityEngine.TouchPhase.Began) pressingVending = true;
             }
         }
         else if (Input.GetMouseButton(0))
@@ -170,6 +252,10 @@ public class kaiAnimation : MonoBehaviour
             if (CheckTouchOnRect(mousePos, moveRightButtonRect)) pressingRight = true;
             if (CheckTouchOnRect(mousePos, jumpButtonRect) && Input.GetMouseButtonDown(0)) pressingJump = true;
             if (CheckTouchOnRect(mousePos, fireButtonRect) && Input.GetMouseButtonDown(0)) pressingFire = true;
+
+            if (CheckTouchOnRect(mousePos, pickupWeaponButtonRect) && Input.GetMouseButtonDown(0)) pressingPickup = true;
+            if (CheckTouchOnRect(mousePos, rechargeButtonRect) && Input.GetMouseButtonDown(0)) pressingRecharge = true;
+            if (CheckTouchOnRect(mousePos, vendingButtonRect) && Input.GetMouseButtonDown(0)) pressingVending = true;
         }
 
         if (pressingLeft)
@@ -188,13 +274,20 @@ public class kaiAnimation : MonoBehaviour
             OnPointerUpMove();
         }
 
-        if (pressingJump)
+        if (pressingJump) OnTouchJump();
+        if (pressingFire) OnTouchFire();
+        
+        if (pressingPickup)
         {
-            OnTouchJump();
+            if (currentPickupScript != null) currentPickupScript.DoPickup();
         }
-        if (pressingFire)
+        if (pressingRecharge)
         {
-            OnTouchFire();
+            if (currentRechargeScript != null) currentRechargeScript.DoRecharge();
+        }
+        if (pressingVending)
+        {
+            if (currentVendingScript != null) currentVendingScript.DoInteract();
         }
     }
 
@@ -206,21 +299,13 @@ public class kaiAnimation : MonoBehaviour
 
     void LateUpdate()
     {
-        if (moveInput > 0 && !isFacingRight)
-        {
-            Flip();
-        }
-        else if (moveInput < 0 && isFacingRight)
-        {
-            Flip();
-        }
+        if (moveInput > 0 && !isFacingRight) Flip();
+        else if (moveInput < 0 && isFacingRight) Flip();
     }
 
     void FixedUpdate()
     {
-        Vector2 targetVelocity = new Vector2(moveInput * moveSpeed, rb.linearVelocity.y);
-        rb.linearVelocity = targetVelocity;
-
+        rb.linearVelocity = new Vector2(moveInput * moveSpeed, rb.linearVelocity.y);
         if (!isGrounded && rb.linearVelocity.y < 0)
         {
             rb.linearVelocity += Vector2.down * extraGravity * Time.fixedDeltaTime;
@@ -257,7 +342,6 @@ public class kaiAnimation : MonoBehaviour
     {
         currentHealth--;
         UpdateHealthUI();
-
         if (currentHealth <= 0)
         {
             Debug.Log("GAME OVER");
@@ -290,35 +374,17 @@ public class kaiAnimation : MonoBehaviour
         if (respawnPoint != newPoint)
         {
             respawnPoint = newPoint;
-            Debug.Log("¡Nuevo punto de reaparición guardado en: " + newPoint.name);
         }
     }
 
     void UpdateHealthUI()
     {
         if (hearts == null || fullHeart == null || emptyHeart == null) return;
-
         for (int i = 0; i < hearts.Length; i++)
         {
             if (hearts[i] == null) continue;
-
-            if (i < currentHealth)
-            {
-                hearts[i].sprite = fullHeart;
-            }
-            else
-            {
-                hearts[i].sprite = emptyHeart;
-            }
-
-            if (i < maxHealth)
-            {
-                hearts[i].enabled = true;
-            }
-            else
-            {
-                hearts[i].enabled = false;
-            }
+            hearts[i].sprite = (i < currentHealth) ? fullHeart : emptyHeart;
+            hearts[i].enabled = (i < maxHealth);
         }
     }
 
@@ -331,52 +397,29 @@ public class kaiAnimation : MonoBehaviour
         }
     }
 
-private void OnDrawGizmosSelected()
+    private void OnDrawGizmosSelected()
     {
         if (groundCheck != null)
         {
-            Gizmos.color = isGrounded ? Color.green : Color.red;
-            Vector3 checkPositionOffset = groundCheck.position + Vector3.down * groundCheckOffset;
-            Gizmos.DrawWireSphere(checkPositionOffset, groundCheckRadius);
-
-            Gizmos.color = Color.blue;
-            Gizmos.DrawLine(groundCheck.position, groundCheck.position + Vector3.down * 0.5f);
+            Gizmos.color = Color.green;
+            Gizmos.DrawWireSphere(groundCheck.position, groundCheckRadius);
         }
     }
 
     public void AcquireWeapon(int weaponIndex)
     {
-        if (weaponIndex < 0 || weaponIndex >= allWeapons.Length)
-        {
-            Debug.LogError("Índice de arma inválido: " + weaponIndex);
-            return;
-        }
-
+        if (weaponIndex < 0 || weaponIndex >= allWeapons.Length) return;
         allWeapons[weaponIndex].isOwned = true;
         currentAmmoCounts[weaponIndex] = allWeapons[weaponIndex].maxAmmo;
-
-        if (currentWeaponIndex == -1)
-        {
-            currentWeaponIndex = weaponIndex;
-        }
-
+        if (currentWeaponIndex == -1) currentWeaponIndex = weaponIndex;
         SwitchWeaponToIndex(weaponIndex);
-        Debug.Log("¡Arma adquirida: " + allWeapons[weaponIndex].weaponName + "!");
     }
 
     private void DoFire()
     {
-        if (currentWeaponIndex == -1)
-        {
-            return;
-        }
-
+        if (currentWeaponIndex == -1) return;
         Weapon currentWeapon = allWeapons[currentWeaponIndex];
-
-        if (!currentWeapon.isOwned)
-        {
-            return;
-        }
+        if (!currentWeapon.isOwned) return;
 
         if (currentAmmoCounts[currentWeaponIndex] > 0)
         {
@@ -386,25 +429,27 @@ private void OnDrawGizmosSelected()
             anim.SetInteger("WeaponIndex", currentWeaponIndex);
             anim.SetTrigger("fire");
             
-            if (currentWeapon.projectilePrefab == null)
+            if (currentWeapon.shootSound != null && shootAudioSource != null)
+            {
+                shootAudioSource.PlayOneShot(currentWeapon.shootSound, 1.0f); 
+            }
+            
+            if (currentWeapon.projectilePrefab == null) 
             {
                 Debug.LogError("Prefab de proyectil no asignado para " + currentWeapon.weaponName);
                 return;
             }
-
-            if (firePoint == null)
+            if (firePoint == null) 
             {
                 Debug.LogError("Fire Point no asignado en el Inspector.", this.gameObject);
                 return;
             }
 
             GameObject projectileGO = Instantiate(currentWeapon.projectilePrefab, firePoint.position, firePoint.rotation);
-
             ElectroshockProjectile projectile = projectileGO.GetComponent<ElectroshockProjectile>();
             if (projectile != null)
             {
-                Vector2 direction = isFacingRight ? Vector2.right : Vector2.left;
-                projectile.SetDirection(direction);
+                projectile.SetDirection(isFacingRight ? Vector2.right : Vector2.left);
             }
         }
         else
@@ -415,75 +460,42 @@ private void OnDrawGizmosSelected()
 
     public void OnFire(InputValue value)
     {
-        if (value.isPressed)
-        {
-            DoFire();
-        }
+        if (value.isPressed) DoFire();
     }
 
     public void RechargeCurrentWeapon()
     {
-        if (currentWeaponIndex == -1)
-        {
-            Debug.Log("No hay arma equipada para recargar.");
-            return;
-        }
-
+        if (currentWeaponIndex == -1) return;
         int weaponIndex = currentWeaponIndex;
-        if (currentAmmoCounts[weaponIndex] == allWeapons[weaponIndex].maxAmmo)
-        {
-            Debug.Log("La batería de " + allWeapons[weaponIndex].weaponName + " ya está llena.");
-            return;
-        }
-
-        Debug.Log("¡Recargando " + allWeapons[weaponIndex].weaponName + "!");
+        if (currentAmmoCounts[weaponIndex] == allWeapons[weaponIndex].maxAmmo) return;
         currentAmmoCounts[weaponIndex] = allWeapons[weaponIndex].maxAmmo;
-
         UpdateWeaponUI();
     }
 
     private void SwitchWeapon()
     {
         if (allWeapons.Length <= 1) return;
-
-        Debug.Log("--- 1. SWITCHWEAPON LLAMADO. Arma actual: " + currentWeaponIndex);
-
         int nextIndex = currentWeaponIndex;
         for (int i = 0; i < allWeapons.Length; i++)
         {
             nextIndex = (nextIndex + 1) % allWeapons.Length;
-            
-            Debug.Log("--- 2. Probando índice: " + nextIndex);
-
             if (allWeapons[nextIndex].isOwned)
             {
-                Debug.Log("--- 3. ¡Arma encontrada! Cambiando a " + allWeapons[nextIndex].weaponName);
-                currentWeaponIndex = nextIndex;
-                UpdateWeaponUI();
+                SwitchWeaponToIndex(nextIndex);
                 return;
             }
-            else
-            {
-                Debug.Log("--- 3b. Arma en índice " + nextIndex + " no es poseída ('isOwned' = false).");
-            }
         }
-        
-        Debug.LogWarning("--- 4. No se encontró otra arma poseída. Quedándose en el arma actual.");
     }
 
     private void SwitchWeaponToIndex(int weaponIndex)
     {
-        if (weaponIndex < 0 || weaponIndex >= allWeapons.Length || !allWeapons[weaponIndex].isOwned)
-        {
-            return;
-        }
-
+        if (weaponIndex < 0 || weaponIndex >= allWeapons.Length || !allWeapons[weaponIndex].isOwned) return;
         currentWeaponIndex = weaponIndex;
         anim.SetInteger("WeaponIndex", currentWeaponIndex);
         UpdateWeaponUI();
     }
 
-   private void UpdateWeaponUI()
+    private void UpdateWeaponUI()
     {
         if (currentWeaponIndex == -1)
         {
@@ -491,64 +503,26 @@ private void OnDrawGizmosSelected()
             batteryMeterUI.enabled = false;
             return;
         }
-        
+
         Weapon currentWeapon = allWeapons[currentWeaponIndex];
-        
-        if (weaponIconUI == null || batteryMeterUI == null)
+        if (weaponIconUI == null || batteryMeterUI == null || currentWeapon.weaponIcon == null || currentWeapon.batterySprites == null || currentWeapon.batterySprites.Length < 4)
         {
-            Debug.LogError("¡ERROR DE UI! Las casillas 'Weapon Icon UI' o 'Battery Meter UI' no están asignadas en el Inspector del Jugador.");
+            Debug.LogError("Error en la UI de Armas: Faltan referencias para el arma: " + currentWeapon.weaponName);
             return;
         }
 
-        // --- ¡DEBUG CHISMOSO! ---
-        if (currentWeapon.weaponIcon != null)
-        {
-            // Esto nos dirá el nombre del archivo del sprite que está cargando
-            Debug.Log("--- 4. UPDATE UI: Poniendo el icono: " + currentWeapon.weaponIcon.name + " (del arma " + currentWeapon.weaponName + ")");
-            weaponIconUI.enabled = true;
-            weaponIconUI.sprite = currentWeapon.weaponIcon;
-        }
-        else
-        {
-            Debug.LogError("¡ERROR DE ARMA! El 'Weapon Icon' para '" + currentWeapon.weaponName + "' (Element " + currentWeaponIndex + ") está vacío (null).");
-            weaponIconUI.enabled = false;
-        }
-        // --- FIN DEL DEBUG ---
+        weaponIconUI.enabled = true;
+        weaponIconUI.sprite = currentWeapon.weaponIcon;
 
-        if (currentWeapon.batterySprites == null || currentWeapon.batterySprites.Length < 4)
-        {
-            Debug.LogError("¡ERROR DE ARMA! Los 'Battery Sprites' para '" + currentWeapon.weaponName + "' (Element " + currentWeaponIndex + ") no están asignados o son menos de 4.");
-            batteryMeterUI.enabled = false;
-            return;
-        }
-        
         batteryMeterUI.enabled = true;
         int currentAmmo = currentAmmoCounts[currentWeaponIndex];
         int maxAmmo = currentWeapon.maxAmmo;
-        
         float ammoPercentage = (maxAmmo > 0) ? (float)currentAmmo / maxAmmo : 0;
 
-        if (currentAmmo == 0)
-        {
-            batteryMeterUI.sprite = currentWeapon.batterySprites[3];
-        }
-        else if (ammoPercentage <= 0.33f)
-        {
-            batteryMeterUI.sprite = currentWeapon.batterySprites[2];
-        }
-        else if (ammoPercentage <= 0.75f)
-        {
-            batteryMeterUI.sprite = currentWeapon.batterySprites[1];
-        }
-        else
-        {
-            batteryMeterUI.sprite = currentWeapon.batterySprites[0];
-        }
-    }
-
-    void UpdateBatteryUI()
-    {
-        UpdateWeaponUI();
+        if (currentAmmo == 0) batteryMeterUI.sprite = currentWeapon.batterySprites[3];
+        else if (ammoPercentage <= 0.33f) batteryMeterUI.sprite = currentWeapon.batterySprites[2];
+        else if (ammoPercentage <= 0.75f) batteryMeterUI.sprite = currentWeapon.batterySprites[1];
+        else batteryMeterUI.sprite = currentWeapon.batterySprites[0];
     }
 
     public void OnPointerDownMove(float direction)
@@ -569,38 +543,51 @@ private void OnDrawGizmosSelected()
         }
     }
 
-   public void OnTouchFire()
+    public void OnTouchFire()
     {
         DoFire();
     }
 
     public void OnSwitchWeapon(InputValue value)
     {
-        if (value.isPressed)
-        {
-            SwitchWeapon();
-        }
+        if (value.isPressed) SwitchWeapon();
     }
 
     public void OnTouchSwitchWeapon()
     {
         SwitchWeapon();
     }
-
+    
     public void GainLife()
     {
-        // Primero, comprobamos si la salud ya está al máximo.
-        if (currentHealth >= maxHealth)
-        {
-            Debug.Log("Salud ya está al máximo. No se puede curar.");
-            return; // Salimos de la función si ya está lleno
-        }
-
-        // Si no está lleno, añadimos una vida
+        if (currentHealth >= maxHealth) return;
         currentHealth++;
-        Debug.Log("¡Vida ganada! Vidas actuales: " + currentHealth);
-
-        // ¡Importante! Actualizamos la UI para que muestre el nuevo corazón
         UpdateHealthUI();
+    }
+
+    public void SetCurrentInteractable(WeaponPickup item)
+    {
+        currentPickupScript = item;
+    }
+    public void SetCurrentInteractable(RechargeStation item)
+    {
+        currentRechargeScript = item;
+    }
+    public void SetCurrentInteractable(VendingMachine item)
+    {
+        currentVendingScript = item;
+    }
+
+    public void ClearCurrentInteractable(WeaponPickup item)
+    {
+        if(currentPickupScript == item) currentPickupScript = null;
+    }
+    public void ClearCurrentInteractable(RechargeStation item)
+    {
+        if(currentRechargeScript == item) currentRechargeScript = null;
+    }
+    public void ClearCurrentInteractable(VendingMachine item)
+    {
+        if(currentVendingScript == item) currentVendingScript = null;
     }
 }

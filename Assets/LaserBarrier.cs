@@ -1,5 +1,6 @@
 using UnityEngine;
 
+[RequireComponent(typeof(AudioSource))]
 public class LaserBarrier : MonoBehaviour
 {
     [Header("Sprites de la Barrera")]
@@ -13,6 +14,10 @@ public class LaserBarrier : MonoBehaviour
     public int damage = 1;           
     public float damageInterval = 0.5f; 
 
+    [Header("Sonido")]
+    public AudioClip laserSound;
+    private AudioSource audioSource;
+
     private BoxCollider2D laserCollider;
     private bool isOn = false; 
     private float timer;
@@ -21,6 +26,7 @@ public class LaserBarrier : MonoBehaviour
     void Start()
     {
         spriteRenderer = GetComponent<SpriteRenderer>();
+        audioSource = GetComponent<AudioSource>();
      
         BoxCollider2D[] colliders = GetComponents<BoxCollider2D>();
         if (colliders.Length > 1) {
@@ -48,26 +54,30 @@ public class LaserBarrier : MonoBehaviour
 
         if (timer <= 0)
         {
-            isOn = !isOn; // Cambia el estado (encendido <-> apagado)
-            SetLaserState(isOn); // Actualiza la visual y el collider
-
-            timer = isOn ? activeTime : inactiveTime; // Resetea el temporizador
+            isOn = !isOn;
+            SetLaserState(isOn);
+            timer = isOn ? activeTime : inactiveTime; 
         }
     }
 
     void SetLaserState(bool state)
     {
         isOn = state;
+        
         if (spriteRenderer != null)
         {
             spriteRenderer.sprite = isOn ? spriteOn : spriteOff; 
         }
+        
         if (laserCollider != null)
         {
             laserCollider.enabled = isOn; 
         }
 
-        Debug.Log("Láser está " + (isOn ? "ENCENDIDO" : "APAGADO"));
+        if (isOn && audioSource != null && laserSound != null)
+        {
+            audioSource.PlayOneShot(laserSound);
+        }
     }
 
     private void OnTriggerStay2D(Collider2D other)
@@ -81,7 +91,6 @@ public class LaserBarrier : MonoBehaviour
                 if (player != null)
                 {
                     player.LoseLife(); 
-                    Debug.Log("Jugador recibió " + damage + " de daño por láser.");
                 }
                 damageTimer = damageInterval; 
             }
@@ -90,7 +99,6 @@ public class LaserBarrier : MonoBehaviour
 
     private void OnTriggerExit2D(Collider2D other)
     {
-        // Cuando el jugador sale del láser, reseteamos el temporizador de daño
         if (other.CompareTag("Player"))
         {
             damageTimer = 0;

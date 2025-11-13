@@ -1,56 +1,62 @@
 using UnityEngine;
+using UnityEngine.UI;
 
+[RequireComponent(typeof(AudioSource))]
 public class RechargeStation : MonoBehaviour
 {
-    [Header("Estado de la Estación")]
+    [Header("Estado")]
     private bool isCharged = true;
     private bool isPlayerNear = false;
     private kaiAnimation playerScript; 
 
-    [Header("Sprites de la Estación")]
+    [Header("Sprites (Opcional)")]
     public Sprite spriteOn; 
     public Sprite spriteOff;
     private SpriteRenderer mySpriteRenderer;
 
-    [Header("UI de Interacción")]
-    public GameObject rechargeIndicator; 
+    [Header("UI de Interacción (PC/Editor)")]
+    public GameObject interactIndicator; 
 
-    [Header("Botón Móvil")]
-    public GameObject mobileRechargeButton;
+    [Header("Sonido")]
+    public AudioClip interactSound; 
+    private AudioSource audioSource;
 
     void Start()
     {
         mySpriteRenderer = GetComponent<SpriteRenderer>();
-        if (mySpriteRenderer == null) {
-            Debug.LogError("RechargeStation no tiene SpriteRenderer!");
-        }
+        if(mySpriteRenderer != null) 
+            mySpriteRenderer.sprite = spriteOn; 
+        
+        if (interactIndicator != null) 
+            interactIndicator.SetActive(false);
 
-        isCharged = true;
-        mySpriteRenderer.sprite = spriteOn;
-
-        if (rechargeIndicator != null)
+        audioSource = GetComponent<AudioSource>();
+        if (audioSource != null)
         {
-            rechargeIndicator.SetActive(false);
+            audioSource.playOnAwake = false;
         }
-
-        if(mobileRechargeButton != null)
-            mobileRechargeButton.SetActive(false);
     }
 
     private void OnTriggerEnter2D(Collider2D other)
     {
-        if (other.CompareTag("Player"))
+        if (other.CompareTag("Player") && isCharged)
         {
             isPlayerNear = true;
             playerScript = other.GetComponent<kaiAnimation>();
-
-            if (isCharged)
+            if(playerScript != null)
             {
-                if (rechargeIndicator != null)
-                    rechargeIndicator.SetActive(true);
+                playerScript.SetCurrentInteractable(this);
                 
-                if (mobileRechargeButton != null)
-                    mobileRechargeButton.SetActive(true);
+                if (Application.isMobilePlatform)
+                {
+                    if(playerScript.rechargeButtonRect != null)
+                        playerScript.rechargeButtonRect.gameObject.SetActive(true);
+                }
+                else
+                {
+                    if (interactIndicator != null) 
+                        interactIndicator.SetActive(true);
+                }
             }
         }
     }
@@ -60,19 +66,23 @@ public class RechargeStation : MonoBehaviour
         if (other.CompareTag("Player"))
         {
             isPlayerNear = false;
+            if(playerScript != null)
+            {
+                playerScript.ClearCurrentInteractable(this);
+                
+                if(playerScript.rechargeButtonRect != null)
+                    playerScript.rechargeButtonRect.gameObject.SetActive(false);
+            }
             playerScript = null;
-
-            if (rechargeIndicator != null)
-                rechargeIndicator.SetActive(false);
             
-            if (mobileRechargeButton != null)
-                mobileRechargeButton.SetActive(false);
+            if (interactIndicator != null) 
+                interactIndicator.SetActive(false);
         }
     }
 
     void Update()
     {
-        if (isPlayerNear && isCharged && Input.GetKeyDown(KeyCode.E))
+        if (isPlayerNear && isCharged && !Application.isMobilePlatform && Input.GetKeyDown(KeyCode.E))
         {
             DoRecharge();
         }
@@ -80,18 +90,22 @@ public class RechargeStation : MonoBehaviour
 
     public void DoRecharge()
     {
-        if (isPlayerNear && isCharged && playerScript != null)
-        {
-            playerScript.RechargeCurrentWeapon(); 
-            
-            isCharged = false;
-            mySpriteRenderer.sprite = spriteOff;
+        if (!isPlayerNear || !isCharged || playerScript == null) return;
 
-            if (rechargeIndicator != null)
-                rechargeIndicator.SetActive(false);
-            
-            if (mobileRechargeButton != null)
-                mobileRechargeButton.SetActive(false);
+        playerScript.RechargeCurrentWeapon(); 
+        isCharged = false;
+
+        if (audioSource != null && interactSound != null)
+        {
+            audioSource.PlayOneShot(interactSound);
         }
+        
+        if(mySpriteRenderer != null) mySpriteRenderer.sprite = spriteOff; 
+        
+        if(playerScript.rechargeButtonRect != null)
+            playerScript.rechargeButtonRect.gameObject.SetActive(false);
+          
+        if (interactIndicator != null) 
+            interactIndicator.SetActive(false);
     }
 }
