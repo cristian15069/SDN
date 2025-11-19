@@ -262,7 +262,7 @@ MonoBehaviour:
   attackCooldown: 1.5
   jumpForce: 6
   jumpCooldown: 3
-  jumpDetectionRange: 3
+  jumpDetectionRange: 5
   ceilingCheck: {fileID: 6982596151845430139}
   ceilingCheckRadius: 0.2
 --- !u!50 &3639426576674323616
