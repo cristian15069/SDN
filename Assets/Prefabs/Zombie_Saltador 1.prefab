@@ -141,7 +141,7 @@ SpriteRenderer:
   m_LightmapParameters: {fileID: 0}
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: -49069325
-  m_SortingLayer: 10
+  m_SortingLayer: 11
   m_SortingOrder: 0
   m_Sprite: {fileID: 8288426215254106694, guid: 391ce0fec89efaa4a83b67800732ebee, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -251,7 +251,7 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 256
   deathEffectPrefab: {fileID: 2327174028243196082, guid: 75a8d461a2d6e574893632655cfbbc08, type: 3}
-  detectionBoxSize: {x: 15, y: 2}
+  detectionBoxSize: {x: 20, y: 2}
   attackBoxSize: {x: 2, y: 3.29}
   playerCheck: {fileID: 3521674344743498283}
   groundDetection: {fileID: 5102707287553727716}

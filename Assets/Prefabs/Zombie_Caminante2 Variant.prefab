@@ -134,7 +134,7 @@ PrefabInstance:
       objectReference: {fileID: 2327174028243196082, guid: 75a8d461a2d6e574893632655cfbbc08, type: 3}
     - target: {fileID: 6423995560294904140, guid: ea4677c8c58bf7d4ebd8d6bd9d8c4def, type: 3}
       propertyPath: detectionBoxSize.x
-      value: 10
+      value: 15
       objectReference: {fileID: 0}
     - target: {fileID: 6423995560294904140, guid: ea4677c8c58bf7d4ebd8d6bd9d8c4def, type: 3}
       propertyPath: groundLayer.m_Bits
