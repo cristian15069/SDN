@@ -355,7 +355,7 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 256
   deathEffectPrefab: {fileID: 2327174028243196082, guid: 75a8d461a2d6e574893632655cfbbc08, type: 3}
-  detectionBoxSize: {x: 20, y: 2}
+  detectionBoxSize: {x: 25, y: 2}
   attackBoxSize: {x: 2.5, y: 1.18}
   playerCheck: {fileID: 1949436027782841882}
   groundDetection: {fileID: 2397250785570887668}

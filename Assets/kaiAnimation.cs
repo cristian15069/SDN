@@ -2,7 +2,7 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
-using System.Collections; // Necesario para Corrutinas
+using System.Collections; 
 
 [System.Serializable]
 public class Weapon
@@ -21,14 +21,13 @@ public class kaiAnimation : MonoBehaviour
     private Rigidbody2D rb;
     public Animator anim;
     public Transform spriteTransform;
-    
     private SpriteRenderer mySpriteRenderer; 
 
     [Header("Sonidos")]
     public AudioSource shootAudioSource;
     public AudioSource walkAudioSource;
     public AudioClip walkSound;
-    public AudioClip hurtSound;
+    public AudioClip hurtSound; 
 
     [Header("Movimiento")]
     public float moveSpeed = 7f;
@@ -47,24 +46,35 @@ public class kaiAnimation : MonoBehaviour
     public float extraGravity = 2f;
     public float groundCheckOffset = 0.1f;
 
-    [Header("Salud e Inmunidad")] // Cabecera actualizada
+    [Header("Salud e Inmunidad")]
     public int maxHealth = 5;
-    private int currentHealth = -1;
-    public float immunityDuration = 2.0f; // Tiempo de inmunidad en segundos
-    private bool isInvulnerable = false;  // Bandera interna
+    private int currentHealth; 
+    public float immunityDuration = 2.0f;
+    private bool isInvulnerable = false;
 
     [Header("UI de Corazones")]
     public Image[] hearts;
     public Sprite fullHeart;
     public Sprite emptyHeart;
 
-    [Header("Caída y Reinicio")]
+    [Header("Habilidad Especial")]
+    public int killsToReady = 10; 
+    public float abilityDuration = 5f;     
+    public Color abilityColor = Color.cyan; 
+    public Text killCounterUI;              
+    public GameObject mobileSkillButtonObj; 
+    
+    private int currentKills = 0;
+    private bool isAbilityReady = false;    
+    private bool isAbilityActive = false;   
+
+    [Header("Caida y Reinicio")]
     public float fallThresholdY = -10f;
 
-    [Header("Reaparición")]
+    [Header("Reaparicion")]
     public Transform respawnPoint;
 
-    [Header("Controles Táctiles Manuales")]
+    [Header("Controles Tactiles")]
     public Canvas myCanvas;
     public RectTransform moveLeftButtonRect;
     public RectTransform moveRightButtonRect;
@@ -73,6 +83,7 @@ public class kaiAnimation : MonoBehaviour
     public RectTransform pickupWeaponButtonRect;
     public RectTransform rechargeButtonRect;
     public RectTransform vendingButtonRect;
+    public RectTransform skillButtonRect; 
 
     private Camera canvasCamera;
     private bool isMoving = false;
@@ -95,6 +106,9 @@ public class kaiAnimation : MonoBehaviour
         rb = GetComponent<Rigidbody2D>();
         rb.freezeRotation = true;
 
+        currentHealth = maxHealth;
+        UpdateHealthUI();
+
         AudioSource[] sources = GetComponents<AudioSource>();
         if (sources.Length > 0) shootAudioSource = sources[0];
         if (sources.Length > 1) walkAudioSource = sources[1];
@@ -108,36 +122,23 @@ public class kaiAnimation : MonoBehaviour
             walkAudioSource.loop = true;
             walkAudioSource.playOnAwake = false;
         }
-        
         shootAudioSource.playOnAwake = false;
 
-        if (spriteTransform == null) { Debug.LogError("Sprite Transform no asignado en " + this.name); this.enabled = false; }
+        if (spriteTransform == null) { this.enabled = false; }
         else 
         {
             mySpriteRenderer = spriteTransform.GetComponent<SpriteRenderer>();
             if(mySpriteRenderer == null) mySpriteRenderer = GetComponentInChildren<SpriteRenderer>();
         }
 
-        if (anim == null) { Debug.LogError("Animator no encontrado en los hijos de " + this.name); this.enabled = false; }
-        if (groundCheck == null) { Debug.LogError("GroundCheck no asignado en " + this.name); this.enabled = false; }
-        if (rb == null) { Debug.LogError("Rigidbody2D no encontrado en " + this.name); this.enabled = false; }
+        if (anim == null) { this.enabled = false; }
+        if (groundCheck == null) { this.enabled = false; }
+        if (rb == null) { this.enabled = false; }
 
         rb.interpolation = RigidbodyInterpolation2D.Interpolate;
 
-        if (currentHealth == -1)
-        {
-            currentHealth = maxHealth;
-        }
-        UpdateHealthUI();
-
-        if (myCanvas.renderMode == RenderMode.ScreenSpaceOverlay)
-        {
-            canvasCamera = null;
-        }
-        else
-        {
-            canvasCamera = myCanvas.worldCamera;
-        }
+        if (myCanvas.renderMode == RenderMode.ScreenSpaceOverlay) canvasCamera = null;
+        else canvasCamera = myCanvas.worldCamera;
 
         currentAmmoCounts = new int[allWeapons.Length];
         weaponIconUI.enabled = false;
@@ -156,6 +157,9 @@ public class kaiAnimation : MonoBehaviour
                 }
             }
         }
+        
+        if (mobileSkillButtonObj != null) mobileSkillButtonObj.SetActive(false);
+        UpdateKillUI();
     }
 
     void Update()
@@ -163,15 +167,17 @@ public class kaiAnimation : MonoBehaviour
         HandleTouchInput();
         HandleWalkSound();
 
+        if (Input.GetKeyDown(KeyCode.R))
+        {
+            TryActivateAbility();
+        }
+
         if (groundCheck == null) return;
 
         Vector2 groundCheckPos = groundCheck.position + Vector3.down * groundCheckOffset;
         isGrounded = Physics2D.OverlapCircle(groundCheckPos, groundCheckRadius, groundLayer);
 
-        if (isGrounded)
-        {
-            isFallingToDeath = false;
-        }
+        if (isGrounded) isFallingToDeath = false;
 
         anim.SetFloat("speed", Mathf.Abs(moveInput));
         anim.SetBool("isGrounded", isGrounded);
@@ -181,6 +187,70 @@ public class kaiAnimation : MonoBehaviour
             isFallingToDeath = true;
             HandleFall();
         }
+    }
+
+    public void AddKill()
+    {
+        if (isAbilityActive || isAbilityReady) return;
+
+        currentKills++;
+        
+        if (currentKills >= killsToReady)
+        {
+            currentKills = killsToReady;
+            isAbilityReady = true;
+            
+            if (mobileSkillButtonObj != null) mobileSkillButtonObj.SetActive(true);
+        }
+        
+        UpdateKillUI();
+    }
+
+    public void TryActivateAbility()
+    {
+        if (isAbilityReady && !isAbilityActive)
+        {
+            StartCoroutine(AbilityRoutine());
+        }
+    }
+
+    void UpdateKillUI()
+    {
+        if (killCounterUI != null)
+        {
+            if (isAbilityActive) killCounterUI.text = "¡ACTIVO!";
+            else if (isAbilityReady) killCounterUI.text = "CARGA ILIMITADA! (PRECIONA R)";
+            else killCounterUI.text = currentKills + "/" + killsToReady;
+        }
+    }
+
+    IEnumerator AbilityRoutine()
+    {
+        isAbilityActive = true;
+        isAbilityReady = false; 
+        currentKills = 0;       
+
+        if (mobileSkillButtonObj != null) mobileSkillButtonObj.SetActive(false);
+        
+        UpdateKillUI();
+
+        float timer = 0f;
+        float flashSpeed = 0.1f; 
+
+        while (timer < abilityDuration)
+        {
+            if (mySpriteRenderer != null)
+            {
+                mySpriteRenderer.color = (mySpriteRenderer.color == Color.white) ? abilityColor : Color.white;
+            }
+            yield return new WaitForSeconds(flashSpeed);
+            timer += flashSpeed;
+        }
+
+        if (mySpriteRenderer != null) mySpriteRenderer.color = Color.white;
+        
+        isAbilityActive = false;
+        UpdateKillUI();
     }
 
     void HandleWalkSound()
@@ -207,6 +277,7 @@ public class kaiAnimation : MonoBehaviour
         bool pressingPickup = false;
         bool pressingRecharge = false;
         bool pressingVending = false;
+        bool pressingSkill = false;
 
         if (Input.touchCount > 0)
         {
@@ -223,6 +294,8 @@ public class kaiAnimation : MonoBehaviour
                 if (CheckTouchOnRect(touchPos, pickupWeaponButtonRect) && phase == UnityEngine.TouchPhase.Began) pressingPickup = true;
                 if (CheckTouchOnRect(touchPos, rechargeButtonRect) && phase == UnityEngine.TouchPhase.Began) pressingRecharge = true;
                 if (CheckTouchOnRect(touchPos, vendingButtonRect) && phase == UnityEngine.TouchPhase.Began) pressingVending = true;
+                
+                if (CheckTouchOnRect(touchPos, skillButtonRect) && phase == UnityEngine.TouchPhase.Began) pressingSkill = true;
             }
         }
         else if (Input.GetMouseButton(0))
@@ -236,26 +309,17 @@ public class kaiAnimation : MonoBehaviour
             if (CheckTouchOnRect(mousePos, pickupWeaponButtonRect) && Input.GetMouseButtonDown(0)) pressingPickup = true;
             if (CheckTouchOnRect(mousePos, rechargeButtonRect) && Input.GetMouseButtonDown(0)) pressingRecharge = true;
             if (CheckTouchOnRect(mousePos, vendingButtonRect) && Input.GetMouseButtonDown(0)) pressingVending = true;
+            
+            if (CheckTouchOnRect(mousePos, skillButtonRect) && Input.GetMouseButtonDown(0)) pressingSkill = true;
         }
 
-        if (pressingLeft)
-        {
-            OnPointerDownMove(-1);
-            isMoving = true;
-        }
-        else if (pressingRight)
-        {
-            OnPointerDownMove(1);
-            isMoving = true;
-        }
-        else if (isMoving)
-        {
-            isMoving = false;
-            OnPointerUpMove();
-        }
+        if (pressingLeft) { OnPointerDownMove(-1); isMoving = true; }
+        else if (pressingRight) { OnPointerDownMove(1); isMoving = true; }
+        else if (isMoving) { isMoving = false; OnPointerUpMove(); }
 
-        if (pressingJump) OnTouchJump();
+        if (pressingJump) DoJump();
         if (pressingFire) OnTouchFire();
+        if (pressingSkill) TryActivateAbility();
         
         if (pressingPickup && currentPickupScript != null) currentPickupScript.DoPickup();
         if (pressingRecharge && currentRechargeScript != null) currentRechargeScript.DoRecharge();
@@ -264,7 +328,7 @@ public class kaiAnimation : MonoBehaviour
 
     bool CheckTouchOnRect(Vector2 touchPosition, RectTransform rect)
     {
-        if (rect == null) return false;
+        if (rect == null || !rect.gameObject.activeInHierarchy) return false;
         return RectTransformUtility.RectangleContainsScreenPoint(rect, touchPosition, canvasCamera);
     }
 
@@ -276,23 +340,34 @@ public class kaiAnimation : MonoBehaviour
 
     void FixedUpdate()
     {
+        #if UNITY_6000_0_OR_NEWER
         rb.linearVelocity = new Vector2(moveInput * moveSpeed, rb.linearVelocity.y);
-        if (!isGrounded && rb.linearVelocity.y < 0)
+        if (!isGrounded && rb.linearVelocity.y < 0) rb.linearVelocity += Vector2.down * extraGravity * Time.fixedDeltaTime;
+        #else
+        rb.velocity = new Vector2(moveInput * moveSpeed, rb.velocity.y);
+        if (!isGrounded && rb.velocity.y < 0) rb.velocity += Vector2.down * extraGravity * Time.fixedDeltaTime;
+        #endif
+    }
+
+    public void OnMove(InputValue value) { moveInput = value.Get<float>(); }
+    
+    public void OnJump(InputValue value)
+    {
+        if (value.isPressed)
         {
-            rb.linearVelocity += Vector2.down * extraGravity * Time.fixedDeltaTime;
+            DoJump();
         }
     }
 
-    public void OnMove(InputValue value)
+    private void DoJump()
     {
-        moveInput = value.Get<float>();
-    }
-
-    public void OnJump(InputValue value)
-    {
-        if (value.isPressed && isGrounded)
+        if (isGrounded)
         {
+            #if UNITY_6000_0_OR_NEWER
             rb.linearVelocity = new Vector2(rb.linearVelocity.x, jumpForce);
+            #else
+            rb.velocity = new Vector2(rb.velocity.x, jumpForce);
+            #endif
         }
     }
 
@@ -304,116 +379,57 @@ public class kaiAnimation : MonoBehaviour
         spriteTransform.localScale = scaler;
     }
 
-    // -------------------------------------------------------------------------
-    // SECCIÓN DE GESTIÓN DE DAÑO (MODIFICADA)
-    // -------------------------------------------------------------------------
+    void HandleFall() { TakeDamageFromTrap(); }
+    public void LoseLife() { TakeDamageFromEnemy(); }
 
-    void HandleFall()
-    {
-        // Caer al vacío cuenta como trampa: quita vida Y reinicia posición
-        TakeDamageFromTrap();
-    }
-
-    /// <summary>
-    /// Llama a esto desde el script de tu Zombie.
-    /// Quita vida pero NO te mueve, y te da inmunidad temporal.
-    /// </summary>
     public void TakeDamageFromEnemy()
     {
-        if (isInvulnerable) return; // Si ya tienes inmunidad, ignorar daño.
-
-        ProcessDamage(false); // false = NO RESPAWNEAR
-        
-        if (currentHealth > 0) // Si sigues vivo, activar inmunidad
-        {
-            StartCoroutine(InvulnerabilityRoutine());
-        }
+        if (isInvulnerable) return; 
+        ProcessDamage(false); 
+        if (currentHealth > 0) StartCoroutine(InvulnerabilityRoutine());
     }
 
-    /// <summary>
-    /// Llama a esto desde la Barrera Láser o Trampas.
-    /// Quita vida Y te regresa al punto de resurrección.
-    /// </summary>
-    public void TakeDamageFromTrap()
-    {
-        // Las trampas y caídas suelen ignorar la inmunidad y forzar respawn
-        ProcessDamage(true); // true = SÍ RESPAWNEAR
-    }
+    public void TakeDamageFromTrap() { ProcessDamage(true); }
 
-    // (Mantenemos este método público por compatibilidad, actuará como daño de enemigo por defecto)
-    public void LoseLife()
-    {
-        TakeDamageFromEnemy();
-    }
-
-    // Lógica interna unificada para quitar vida
     private void ProcessDamage(bool forceRespawn)
     {
         currentHealth--;
         UpdateHealthUI();
 
-        if (hurtSound != null && shootAudioSource != null)
-        {
-            shootAudioSource.PlayOneShot(hurtSound); 
-        }
-        else 
-        {
-            Debug.LogWarning("Falta asignar el Audio de Daño (HurtSound)");
-        }
+        if (hurtSound != null && shootAudioSource != null) shootAudioSource.PlayOneShot(hurtSound); 
 
         if (currentHealth <= 0)
         {
-            Debug.Log("GAME OVER");
-            currentHealth = maxHealth;
             SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
         }
         else
         {
-            Debug.Log("Vida perdida. Vidas restantes: " + currentHealth);
-            
-            // Aquí está la diferencia: Solo respawneamos si es trampa/caída (forceRespawn)
-            if (forceRespawn)
-            {
-                RespawnPlayer();
-            }
-            else
-            {
-                // Si es daño normal (zombie), nos quedamos donde estamos.
-                // Opcional: Podrías añadir un pequeño empujón (knockback) aquí si quisieras.
-            }
+            if (forceRespawn) RespawnPlayer();
         }
     }
 
-    // Corrutina para la inmunidad y el parpadeo
     IEnumerator InvulnerabilityRoutine()
     {
         isInvulnerable = true;
-        
         float timer = 0;
-        float blinkInterval = 0.15f; // Qué tan rápido parpadea
-
+        float blinkInterval = 0.15f; 
         while (timer < immunityDuration)
         {
-            // Alternar visibilidad o color
             if(mySpriteRenderer != null)
             {
                 Color c = mySpriteRenderer.color;
-                c.a = (c.a == 1f) ? 0.5f : 1f; // Alternar entre opaco y semi-transparente
+                c.a = (c.a == 1f) ? 0.5f : 1f; 
                 mySpriteRenderer.color = c;
             }
-
             yield return new WaitForSeconds(blinkInterval);
             timer += blinkInterval;
         }
-
-        // Restaurar estado normal
         if(mySpriteRenderer != null)
         {
             Color c = mySpriteRenderer.color;
             c.a = 1f;
             mySpriteRenderer.color = c;
         }
-        
         isInvulnerable = false;
     }
 
@@ -422,22 +438,16 @@ public class kaiAnimation : MonoBehaviour
         if (respawnPoint != null)
         {
             transform.position = respawnPoint.position;
+            #if UNITY_6000_0_OR_NEWER
             rb.linearVelocity = Vector2.zero;
+            #else
+            rb.velocity = Vector2.zero;
+            #endif
             isFallingToDeath = false;
-        }
-        else
-        {
-            Debug.LogError("¡No se ha asignado un Respawn Point en el Inspector!");
         }
     }
 
-    public void SetRespawnPoint(Transform newPoint)
-    {
-        if (respawnPoint != newPoint)
-        {
-            respawnPoint = newPoint;
-        }
-    }
+    public void SetRespawnPoint(Transform newPoint) { if (respawnPoint != newPoint) respawnPoint = newPoint; }
 
     void UpdateHealthUI()
     {
@@ -447,24 +457,6 @@ public class kaiAnimation : MonoBehaviour
             if (hearts[i] == null) continue;
             hearts[i].sprite = (i < currentHealth) ? fullHeart : emptyHeart;
             hearts[i].enabled = (i < maxHealth);
-        }
-    }
-
-    public void SnapToGround()
-    {
-        RaycastHit2D hit = Physics2D.Raycast(transform.position, Vector2.down, 1f, groundLayer);
-        if (hit.collider != null)
-        {
-            transform.position = new Vector3(transform.position.x, hit.point.y + 0.1f, transform.position.z);
-        }
-    }
-
-    private void OnDrawGizmosSelected()
-    {
-        if (groundCheck != null)
-        {
-            Gizmos.color = Color.green;
-            Gizmos.DrawWireSphere(groundCheck.position, groundCheckRadius);
         }
     }
 
@@ -483,39 +475,35 @@ public class kaiAnimation : MonoBehaviour
         Weapon currentWeapon = allWeapons[currentWeaponIndex];
         if (!currentWeapon.isOwned) return;
 
-        if (currentAmmoCounts[currentWeaponIndex] > 0)
+        if (currentAmmoCounts[currentWeaponIndex] > 0 || isAbilityActive)
         {
-            currentAmmoCounts[currentWeaponIndex]--;
-            UpdateWeaponUI();
+            if (!isAbilityActive)
+            {
+                currentAmmoCounts[currentWeaponIndex]--;
+                UpdateWeaponUI();
+            }
             
             anim.SetInteger("WeaponIndex", currentWeaponIndex);
             anim.SetTrigger("fire");
             
             if (currentWeapon.shootSound != null && shootAudioSource != null)
-            {
                 shootAudioSource.PlayOneShot(currentWeapon.shootSound, 1.0f); 
-            }
             
-            if (currentWeapon.projectilePrefab == null) return;
-            if (firePoint == null) return;
-
-            GameObject projectileGO = Instantiate(currentWeapon.projectilePrefab, firePoint.position, firePoint.rotation);
-            ElectroshockProjectile projectile = projectileGO.GetComponent<ElectroshockProjectile>();
-            if (projectile != null)
+            if (currentWeapon.projectilePrefab != null && firePoint != null)
             {
-                projectile.SetDirection(isFacingRight ? Vector2.right : Vector2.left);
+                GameObject projectileGO = Instantiate(currentWeapon.projectilePrefab, firePoint.position, firePoint.rotation);
+                ElectroshockProjectile projectile = projectileGO.GetComponent<ElectroshockProjectile>();
+                if (projectile != null) projectile.SetDirection(isFacingRight ? Vector2.right : Vector2.left);
             }
         }
         else
         {
-            Debug.LogWarning("¡Batería vacía para " + currentWeapon.weaponName + "!");
+            Debug.LogWarning("Bateria vacia");
         }
     }
 
-    public void OnFire(InputValue value)
-    {
-        if (value.isPressed) DoFire();
-    }
+    public void OnFire(InputValue value) { if (value.isPressed) DoFire(); }
+    public void OnTouchFire() { DoFire(); }
 
     public void RechargeCurrentWeapon()
     {
@@ -533,11 +521,7 @@ public class kaiAnimation : MonoBehaviour
         for (int i = 0; i < allWeapons.Length; i++)
         {
             nextIndex = (nextIndex + 1) % allWeapons.Length;
-            if (allWeapons[nextIndex].isOwned)
-            {
-                SwitchWeaponToIndex(nextIndex);
-                return;
-            }
+            if (allWeapons[nextIndex].isOwned) { SwitchWeaponToIndex(nextIndex); return; }
         }
     }
 
@@ -551,18 +535,10 @@ public class kaiAnimation : MonoBehaviour
 
     private void UpdateWeaponUI()
     {
-        if (currentWeaponIndex == -1)
-        {
-            weaponIconUI.enabled = false;
-            batteryMeterUI.enabled = false;
-            return;
-        }
+        if (currentWeaponIndex == -1) { weaponIconUI.enabled = false; batteryMeterUI.enabled = false; return; }
 
         Weapon currentWeapon = allWeapons[currentWeaponIndex];
-        if (weaponIconUI == null || batteryMeterUI == null || currentWeapon.weaponIcon == null || currentWeapon.batterySprites == null || currentWeapon.batterySprites.Length < 4)
-        {
-            return;
-        }
+        if (weaponIconUI == null || batteryMeterUI == null || currentWeapon.weaponIcon == null) return;
 
         weaponIconUI.enabled = true;
         weaponIconUI.sprite = currentWeapon.weaponIcon;
@@ -578,50 +554,14 @@ public class kaiAnimation : MonoBehaviour
         else batteryMeterUI.sprite = currentWeapon.batterySprites[0];
     }
 
-    public void OnPointerDownMove(float direction)
-    {
-        moveInput = direction;
-    }
-
-    public void OnPointerUpMove()
-    {
-        moveInput = 0f;
-    }
-
-    public void OnTouchJump()
-    {
-        if (isGrounded)
-        {
-            rb.linearVelocity = new Vector2(rb.linearVelocity.x, jumpForce);
-        }
-    }
-
-    public void OnTouchFire()
-    {
-        DoFire();
-    }
-
-    public void OnSwitchWeapon(InputValue value)
-    {
-        if (value.isPressed) SwitchWeapon();
-    }
-
-    public void OnTouchSwitchWeapon()
-    {
-        SwitchWeapon();
-    }
-    
-    public void GainLife()
-    {
-        if (currentHealth >= maxHealth) return;
-        currentHealth++;
-        UpdateHealthUI();
-    }
-
+    public void OnPointerDownMove(float direction) { moveInput = direction; }
+    public void OnPointerUpMove() { moveInput = 0f; }
+    public void OnSwitchWeapon(InputValue value) { if (value.isPressed) SwitchWeapon(); }
+    public void OnTouchSwitchWeapon() { SwitchWeapon(); }
+    public void GainLife() { if (currentHealth >= maxHealth) return; currentHealth++; UpdateHealthUI(); }
     public void SetCurrentInteractable(WeaponPickup item) { currentPickupScript = item; }
     public void SetCurrentInteractable(RechargeStation item) { currentRechargeScript = item; }
     public void SetCurrentInteractable(VendingMachine item) { currentVendingScript = item; }
-
     public void ClearCurrentInteractable(WeaponPickup item) { if(currentPickupScript == item) currentPickupScript = null; }
     public void ClearCurrentInteractable(RechargeStation item) { if(currentRechargeScript == item) currentRechargeScript = null; }
     public void ClearCurrentInteractable(VendingMachine item) { if(currentVendingScript == item) currentVendingScript = null; }
