@@ -31,6 +31,37 @@ Transform:
   m_Children: []
   m_Father: {fileID: 3477733964853383159}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1888313380682628972
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8878028345392297068}
+  m_Layer: 0
+  m_Name: walCheck
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &8878028345392297068
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1888313380682628972}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -0.3, y: 0.66, z: 0}
+  m_LocalScale: {x: -1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 3477733964853383159}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &2932794083313142375
 GameObject:
   m_ObjectHideFlags: 0
@@ -141,7 +172,7 @@ SpriteRenderer:
   m_LightmapParameters: {fileID: 0}
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: -49069325
-  m_SortingLayer: 10
+  m_SortingLayer: 11
   m_SortingOrder: 0
   m_Sprite: {fileID: 8288426215254106694, guid: 391ce0fec89efaa4a83b67800732ebee, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -226,6 +257,7 @@ Transform:
   - {fileID: 5102707287553727716}
   - {fileID: 3521674344743498283}
   - {fileID: 926837609630398975}
+  - {fileID: 8878028345392297068}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &3532563204272893704
@@ -251,7 +283,7 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 256
   deathEffectPrefab: {fileID: 2327174028243196082, guid: 75a8d461a2d6e574893632655cfbbc08, type: 3}
-  detectionBoxSize: {x: 15, y: 2}
+  detectionBoxSize: {x: 25, y: 2}
   attackBoxSize: {x: 2, y: 3.29}
   playerCheck: {fileID: 3521674344743498283}
   groundDetection: {fileID: 5102707287553727716}
@@ -261,10 +293,14 @@ MonoBehaviour:
     m_Bits: 64
   attackCooldown: 1.5
   jumpForce: 6
+  forwardJumpForce: 4
   jumpCooldown: 3
-  jumpDetectionRange: 3
+  jumpDetectionRange: 10
+  heightDetectionThreshold: 1.5
   ceilingCheck: {fileID: 6982596151845430139}
   ceilingCheckRadius: 0.2
+  wallCheck: {fileID: 8878028345392297068}
+  wallCheckDistance: 1
 --- !u!50 &3639426576674323616
 Rigidbody2D:
   serializedVersion: 5
@@ -351,7 +387,7 @@ AudioSource:
   m_audioClip: {fileID: 0}
   m_Resource: {fileID: 0}
   m_PlayOnAwake: 1
-  m_Volume: 0.3
+  m_Volume: 0.1
   m_Pitch: 1
   Loop: 0
   Mute: 0

@@ -16,8 +16,8 @@ TagManager:
   - weapon
   - player
   - Enemy
-  - 
-  - 
+  - victory
+  - confetti
   - 
   - 
   - 
@@ -66,6 +66,9 @@ TagManager:
   - name: posteEne
     uniqueID: 1727539311
     locked: 0
+  - name: bodega
+    uniqueID: 1203908561
+    locked: 0
   - name: kai
     uniqueID: 636147211
     locked: 0
@@ -80,6 +83,9 @@ TagManager:
     locked: 0
   - name: button
     uniqueID: 556185983
+    locked: 0
+  - name: victory
+    uniqueID: 1505025433
     locked: 0
   m_RenderingLayers:
   - Default

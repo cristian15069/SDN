@@ -134,7 +134,7 @@ PrefabInstance:
       objectReference: {fileID: 2327174028243196082, guid: 75a8d461a2d6e574893632655cfbbc08, type: 3}
     - target: {fileID: 6423995560294904140, guid: ea4677c8c58bf7d4ebd8d6bd9d8c4def, type: 3}
       propertyPath: detectionBoxSize.x
-      value: 10
+      value: 20
       objectReference: {fileID: 0}
     - target: {fileID: 6423995560294904140, guid: ea4677c8c58bf7d4ebd8d6bd9d8c4def, type: 3}
       propertyPath: groundLayer.m_Bits
@@ -166,6 +166,10 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6644186813040378798, guid: ea4677c8c58bf7d4ebd8d6bd9d8c4def, type: 3}
       propertyPath: m_Offset.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6644186813040378798, guid: ea4677c8c58bf7d4ebd8d6bd9d8c4def, type: 3}
+      propertyPath: m_IsTrigger
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 6915761390188145131, guid: ea4677c8c58bf7d4ebd8d6bd9d8c4def, type: 3}
@@ -210,7 +214,7 @@ AudioSource:
   m_audioClip: {fileID: 0}
   m_Resource: {fileID: 0}
   m_PlayOnAwake: 1
-  m_Volume: 0.3
+  m_Volume: 0.1
   m_Pitch: 1
   Loop: 0
   Mute: 0
