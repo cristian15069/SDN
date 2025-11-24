@@ -24,9 +24,9 @@ AnimationClip:
       value: {fileID: 5375186943353464591, guid: 261d2370a6f6ffd44ac4e4ff3b9b3475, type: 3}
     - time: 0.125
       value: {fileID: 1373357526968975596, guid: 428e9f248634d3640a164d6cb4a384f2, type: 3}
-    - time: 0.375
+    - time: 0.25
       value: {fileID: -1830697482975907774, guid: 0e0a9b2b9681bc140a1d065b3b1d76e1, type: 3}
-    - time: 0.5416667
+    - time: 0.41666666
       value: {fileID: -679434766757446362, guid: 96ccf3013614d4342911e0482abea92a, type: 3}
     attribute: m_Sprite
     path: 
@@ -59,7 +59,7 @@ AnimationClip:
     m_AdditiveReferencePoseClip: {fileID: 0}
     m_AdditiveReferencePoseTime: 0
     m_StartTime: 0
-    m_StopTime: 0.5833334
+    m_StopTime: 0.4583333
     m_OrientationOffsetY: 0
     m_Level: 0
     m_CycleOffset: 0
@@ -79,14 +79,14 @@ AnimationClip:
   m_HasGenericRootTransform: 0
   m_HasMotionFloatCurves: 0
   m_Events:
-  - time: 0.375
+  - time: 0.25
     functionName: DealDamageFromAnimation
     data: 
     objectReferenceParameter: {fileID: 0}
     floatParameter: 0
     intParameter: 0
     messageOptions: 0
-  - time: 0.5416667
+  - time: 0.41666666
     functionName: OnAttackAnimationComplete
     data: 
     objectReferenceParameter: {fileID: 0}
