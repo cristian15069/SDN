@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
+using System.Collections; // Necesario para Corrutinas
 
 [System.Serializable]
 public class Weapon
@@ -21,10 +22,13 @@ public class kaiAnimation : MonoBehaviour
     public Animator anim;
     public Transform spriteTransform;
     
+    private SpriteRenderer mySpriteRenderer; 
+
     [Header("Sonidos")]
-    public AudioSource shootAudioSource; // Tu AudioSource original para disparos
-    public AudioSource walkAudioSource;  // Un NUEVO AudioSource para caminar
-    public AudioClip walkSound;          // El archivo .wav o .mp3 de tus pasos
+    public AudioSource shootAudioSource;
+    public AudioSource walkAudioSource;
+    public AudioClip walkSound;
+    public AudioClip hurtSound;
 
     [Header("Movimiento")]
     public float moveSpeed = 7f;
@@ -43,9 +47,11 @@ public class kaiAnimation : MonoBehaviour
     public float extraGravity = 2f;
     public float groundCheckOffset = 0.1f;
 
-    [Header("Salud")]
+    [Header("Salud e Inmunidad")] // Cabecera actualizada
     public int maxHealth = 5;
-    private static int currentHealth = -1;
+    private int currentHealth = -1;
+    public float immunityDuration = 2.0f; // Tiempo de inmunidad en segundos
+    private bool isInvulnerable = false;  // Bandera interna
 
     [Header("UI de Corazones")]
     public Image[] hearts;
@@ -89,47 +95,29 @@ public class kaiAnimation : MonoBehaviour
         rb = GetComponent<Rigidbody2D>();
         rb.freezeRotation = true;
 
-        // --- LÓGICA DE AUDIO AJUSTADA ---
-        // Buscamos los 2 AudioSource
         AudioSource[] sources = GetComponents<AudioSource>();
-        if (sources.Length > 0)
-        {
-            shootAudioSource = sources[0]; // El primero es para disparos
-        }
-        if (sources.Length > 1)
-        {
-            walkAudioSource = sources[1]; // El segundo es para caminar
-        }
+        if (sources.Length > 0) shootAudioSource = sources[0];
+        if (sources.Length > 1) walkAudioSource = sources[1];
 
-        // Si te faltan, los creamos por seguridad y te avisamos
-        if (shootAudioSource == null) 
-        {
-            Debug.LogWarning("Faltaba 1er AudioSource (disparos), creando uno.");
-            shootAudioSource = gameObject.AddComponent<AudioSource>();
-        }
-        if (walkAudioSource == null)
-        {
-            Debug.LogWarning("Faltaba 2do AudioSource (caminar), creando uno.");
-            walkAudioSource = gameObject.AddComponent<AudioSource>();
-        }
+        if (shootAudioSource == null) shootAudioSource = gameObject.AddComponent<AudioSource>();
+        if (walkAudioSource == null) walkAudioSource = gameObject.AddComponent<AudioSource>();
 
-        // Configura el altavoz de caminar
         if (walkSound != null)
         {
             walkAudioSource.clip = walkSound;
             walkAudioSource.loop = true;
             walkAudioSource.playOnAwake = false;
         }
-        else
-        {
-            Debug.LogWarning("No se ha asignado un 'Walk Sound' en el Inspector.");
-        }
         
         shootAudioSource.playOnAwake = false;
-        // --- FIN LÓGICA DE AUDIO ---
-
 
         if (spriteTransform == null) { Debug.LogError("Sprite Transform no asignado en " + this.name); this.enabled = false; }
+        else 
+        {
+            mySpriteRenderer = spriteTransform.GetComponent<SpriteRenderer>();
+            if(mySpriteRenderer == null) mySpriteRenderer = GetComponentInChildren<SpriteRenderer>();
+        }
+
         if (anim == null) { Debug.LogError("Animator no encontrado en los hijos de " + this.name); this.enabled = false; }
         if (groundCheck == null) { Debug.LogError("GroundCheck no asignado en " + this.name); this.enabled = false; }
         if (rb == null) { Debug.LogError("Rigidbody2D no encontrado en " + this.name); this.enabled = false; }
@@ -173,7 +161,7 @@ public class kaiAnimation : MonoBehaviour
     void Update()
     {
         HandleTouchInput();
-        HandleWalkSound(); // <-- ¡LÓGICA DE SONIDO AÑADIDA!
+        HandleWalkSound();
 
         if (groundCheck == null) return;
 
@@ -195,26 +183,18 @@ public class kaiAnimation : MonoBehaviour
         }
     }
 
-    // --- ¡NUEVA FUNCIÓN DE SONIDO! ---
     void HandleWalkSound()
     {
         if (walkAudioSource == null) return;
-
         bool isWalkingOnGround = (Mathf.Abs(moveInput) > 0.1f && isGrounded);
 
         if (isWalkingOnGround)
         {
-            if (!walkAudioSource.isPlaying)
-            {
-                walkAudioSource.Play();
-            }
+            if (!walkAudioSource.isPlaying) walkAudioSource.Play();
         }
         else
         {
-            if (walkAudioSource.isPlaying)
-            {
-                walkAudioSource.Stop();
-            }
+            if (walkAudioSource.isPlaying) walkAudioSource.Stop();
         }
     }
 
@@ -277,18 +257,9 @@ public class kaiAnimation : MonoBehaviour
         if (pressingJump) OnTouchJump();
         if (pressingFire) OnTouchFire();
         
-        if (pressingPickup)
-        {
-            if (currentPickupScript != null) currentPickupScript.DoPickup();
-        }
-        if (pressingRecharge)
-        {
-            if (currentRechargeScript != null) currentRechargeScript.DoRecharge();
-        }
-        if (pressingVending)
-        {
-            if (currentVendingScript != null) currentVendingScript.DoInteract();
-        }
+        if (pressingPickup && currentPickupScript != null) currentPickupScript.DoPickup();
+        if (pressingRecharge && currentRechargeScript != null) currentRechargeScript.DoRecharge();
+        if (pressingVending && currentVendingScript != null) currentVendingScript.DoInteract();
     }
 
     bool CheckTouchOnRect(Vector2 touchPosition, RectTransform rect)
@@ -333,15 +304,63 @@ public class kaiAnimation : MonoBehaviour
         spriteTransform.localScale = scaler;
     }
 
+    // -------------------------------------------------------------------------
+    // SECCIÓN DE GESTIÓN DE DAÑO (MODIFICADA)
+    // -------------------------------------------------------------------------
+
     void HandleFall()
     {
-        LoseLife();
+        // Caer al vacío cuenta como trampa: quita vida Y reinicia posición
+        TakeDamageFromTrap();
     }
 
+    /// <summary>
+    /// Llama a esto desde el script de tu Zombie.
+    /// Quita vida pero NO te mueve, y te da inmunidad temporal.
+    /// </summary>
+    public void TakeDamageFromEnemy()
+    {
+        if (isInvulnerable) return; // Si ya tienes inmunidad, ignorar daño.
+
+        ProcessDamage(false); // false = NO RESPAWNEAR
+        
+        if (currentHealth > 0) // Si sigues vivo, activar inmunidad
+        {
+            StartCoroutine(InvulnerabilityRoutine());
+        }
+    }
+
+    /// <summary>
+    /// Llama a esto desde la Barrera Láser o Trampas.
+    /// Quita vida Y te regresa al punto de resurrección.
+    /// </summary>
+    public void TakeDamageFromTrap()
+    {
+        // Las trampas y caídas suelen ignorar la inmunidad y forzar respawn
+        ProcessDamage(true); // true = SÍ RESPAWNEAR
+    }
+
+    // (Mantenemos este método público por compatibilidad, actuará como daño de enemigo por defecto)
     public void LoseLife()
+    {
+        TakeDamageFromEnemy();
+    }
+
+    // Lógica interna unificada para quitar vida
+    private void ProcessDamage(bool forceRespawn)
     {
         currentHealth--;
         UpdateHealthUI();
+
+        if (hurtSound != null && shootAudioSource != null)
+        {
+            shootAudioSource.PlayOneShot(hurtSound); 
+        }
+        else 
+        {
+            Debug.LogWarning("Falta asignar el Audio de Daño (HurtSound)");
+        }
+
         if (currentHealth <= 0)
         {
             Debug.Log("GAME OVER");
@@ -351,8 +370,51 @@ public class kaiAnimation : MonoBehaviour
         else
         {
             Debug.Log("Vida perdida. Vidas restantes: " + currentHealth);
-            RespawnPlayer();
+            
+            // Aquí está la diferencia: Solo respawneamos si es trampa/caída (forceRespawn)
+            if (forceRespawn)
+            {
+                RespawnPlayer();
+            }
+            else
+            {
+                // Si es daño normal (zombie), nos quedamos donde estamos.
+                // Opcional: Podrías añadir un pequeño empujón (knockback) aquí si quisieras.
+            }
         }
+    }
+
+    // Corrutina para la inmunidad y el parpadeo
+    IEnumerator InvulnerabilityRoutine()
+    {
+        isInvulnerable = true;
+        
+        float timer = 0;
+        float blinkInterval = 0.15f; // Qué tan rápido parpadea
+
+        while (timer < immunityDuration)
+        {
+            // Alternar visibilidad o color
+            if(mySpriteRenderer != null)
+            {
+                Color c = mySpriteRenderer.color;
+                c.a = (c.a == 1f) ? 0.5f : 1f; // Alternar entre opaco y semi-transparente
+                mySpriteRenderer.color = c;
+            }
+
+            yield return new WaitForSeconds(blinkInterval);
+            timer += blinkInterval;
+        }
+
+        // Restaurar estado normal
+        if(mySpriteRenderer != null)
+        {
+            Color c = mySpriteRenderer.color;
+            c.a = 1f;
+            mySpriteRenderer.color = c;
+        }
+        
+        isInvulnerable = false;
     }
 
     void RespawnPlayer()
@@ -434,16 +496,8 @@ public class kaiAnimation : MonoBehaviour
                 shootAudioSource.PlayOneShot(currentWeapon.shootSound, 1.0f); 
             }
             
-            if (currentWeapon.projectilePrefab == null) 
-            {
-                Debug.LogError("Prefab de proyectil no asignado para " + currentWeapon.weaponName);
-                return;
-            }
-            if (firePoint == null) 
-            {
-                Debug.LogError("Fire Point no asignado en el Inspector.", this.gameObject);
-                return;
-            }
+            if (currentWeapon.projectilePrefab == null) return;
+            if (firePoint == null) return;
 
             GameObject projectileGO = Instantiate(currentWeapon.projectilePrefab, firePoint.position, firePoint.rotation);
             ElectroshockProjectile projectile = projectileGO.GetComponent<ElectroshockProjectile>();
@@ -507,7 +561,6 @@ public class kaiAnimation : MonoBehaviour
         Weapon currentWeapon = allWeapons[currentWeaponIndex];
         if (weaponIconUI == null || batteryMeterUI == null || currentWeapon.weaponIcon == null || currentWeapon.batterySprites == null || currentWeapon.batterySprites.Length < 4)
         {
-            Debug.LogError("Error en la UI de Armas: Faltan referencias para el arma: " + currentWeapon.weaponName);
             return;
         }
 
@@ -565,29 +618,11 @@ public class kaiAnimation : MonoBehaviour
         UpdateHealthUI();
     }
 
-    public void SetCurrentInteractable(WeaponPickup item)
-    {
-        currentPickupScript = item;
-    }
-    public void SetCurrentInteractable(RechargeStation item)
-    {
-        currentRechargeScript = item;
-    }
-    public void SetCurrentInteractable(VendingMachine item)
-    {
-        currentVendingScript = item;
-    }
+    public void SetCurrentInteractable(WeaponPickup item) { currentPickupScript = item; }
+    public void SetCurrentInteractable(RechargeStation item) { currentRechargeScript = item; }
+    public void SetCurrentInteractable(VendingMachine item) { currentVendingScript = item; }
 
-    public void ClearCurrentInteractable(WeaponPickup item)
-    {
-        if(currentPickupScript == item) currentPickupScript = null;
-    }
-    public void ClearCurrentInteractable(RechargeStation item)
-    {
-        if(currentRechargeScript == item) currentRechargeScript = null;
-    }
-    public void ClearCurrentInteractable(VendingMachine item)
-    {
-        if(currentVendingScript == item) currentVendingScript = null;
-    }
+    public void ClearCurrentInteractable(WeaponPickup item) { if(currentPickupScript == item) currentPickupScript = null; }
+    public void ClearCurrentInteractable(RechargeStation item) { if(currentRechargeScript == item) currentRechargeScript = null; }
+    public void ClearCurrentInteractable(VendingMachine item) { if(currentVendingScript == item) currentVendingScript = null; }
 }

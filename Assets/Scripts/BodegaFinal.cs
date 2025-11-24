@@ -1,34 +1,51 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 
 public class BodegaFinal : MonoBehaviour
 {
     [Header("Configuración de Escena")]
-    public string finalMenuSceneName = "FinalMenuScene"; // Nombre de tu escena de victoria
-    public float delayBeforeLoading = 0.5f; // Tiempo que tarda la animación en terminar
+    public string finalMenuSceneName = "FinalMenuScene";
+    public float delayBeforeLoading = 4.0f;
 
     [Header("Referencias al Jugador")]
-    public kaiAnimation playerScript; 
+    public kaiAnimation playerScript;
     public Rigidbody2D playerRb;
     public Animator playerAnim;
-    public GameObject playerUI; // La UI de corazones/armas para ocultarla
+    public GameObject playerUI;
 
     [Header("Animación de la Puerta")]
-    public Animator doorAnimator; // El Animator de la bodega/puerta
-    public string openTriggerName = "OpenDoor"; // El nombre del Trigger en el Animator de la puerta
+    public Animator doorAnimator;
+    public string openTriggerName = "OpenDoor";
 
     [Header("UI de Interacción")]
-    public GameObject pcIndicator; // El texto "Presiona V"
-    public GameObject mobileButton; // El botón para abrir en móvil
+    public GameObject pcIndicator;
+    public GameObject mobileButton;
+
+    [Header("Celebración")]
+    public GameObject victoryPanel;
+    public AudioSource audioSource;
+    public AudioClip victorySound;
+    public ParticleSystem confettiParticles;
 
     private bool isPlayerNear = false;
     private bool levelFinished = false;
 
     void Start()
     {
-        // Asegurarnos de que la UI empiece oculta
+        if (mobileButton != null)
+        {
+            Button btn = mobileButton.GetComponent<Button>();
+            if (btn != null)
+            {
+                btn.onClick.RemoveAllListeners();
+                btn.onClick.AddListener(ActivateFinalSequence);
+            }
+            mobileButton.SetActive(false);
+        }
+
         if (pcIndicator != null) pcIndicator.SetActive(false);
-        if (mobileButton != null) mobileButton.SetActive(false);
+        if (victoryPanel != null) victoryPanel.SetActive(false);
     }
 
     void OnTriggerEnter2D(Collider2D other)
@@ -36,8 +53,6 @@ public class BodegaFinal : MonoBehaviour
         if (other.CompareTag("Player") && !levelFinished)
         {
             isPlayerNear = true;
-            
-            // Mostrar la UI correspondiente
             if (Application.isMobilePlatform)
             {
                 if (mobileButton != null) mobileButton.SetActive(true);
@@ -54,8 +69,6 @@ public class BodegaFinal : MonoBehaviour
         if (other.CompareTag("Player"))
         {
             isPlayerNear = false;
-            
-            // Ocultar toda la UI si se aleja
             if (pcIndicator != null) pcIndicator.SetActive(false);
             if (mobileButton != null) mobileButton.SetActive(false);
         }
@@ -63,48 +76,68 @@ public class BodegaFinal : MonoBehaviour
 
     void Update()
     {
-        // Lógica para PC (Tecla V)
-        // Usamos !Application.isMobilePlatform para que en el Editor funcione la tecla V
-        if (isPlayerNear && !levelFinished && !Application.isMobilePlatform && Input.GetKeyDown(KeyCode.V))
+        if (isPlayerNear && !levelFinished && Input.GetKeyDown(KeyCode.V))
         {
             ActivateFinalSequence();
         }
     }
 
-    // Esta función la llamará el botón móvil (o la tecla V)
     public void ActivateFinalSequence()
     {
-        if (levelFinished) return; // Evitar activarlo dos veces
+        if (levelFinished) return;
         levelFinished = true;
 
-        // 1. Ocultar indicadores de interacción
         if (pcIndicator != null) pcIndicator.SetActive(false);
         if (mobileButton != null) mobileButton.SetActive(false);
 
-        // 2. Detener al jugador
         if (playerScript != null) playerScript.enabled = false;
+
         if (playerRb != null)
         {
+#if UNITY_6000_0_OR_NEWER
             playerRb.linearVelocity = Vector2.zero;
-            playerRb.simulated = false; 
+#else
+            playerRb.velocity = Vector2.zero;
+#endif
+            playerRb.simulated = false;
         }
+
         if (playerAnim != null) playerAnim.SetFloat("speed", 0);
-
-        // 3. Ocultar la UI del juego
         if (playerUI != null) playerUI.SetActive(false);
+        if (doorAnimator != null) doorAnimator.SetTrigger(openTriggerName);
 
-        // 4. Reproducir animación de la puerta
-        if (doorAnimator != null)
-        {
-            doorAnimator.SetTrigger(openTriggerName);
-        }
-
-        // 5. Cargar el menú final después del retraso
-        Invoke("LoadMenu", delayBeforeLoading);
+        StartCoroutine(ShowVictorySequence());
     }
 
-    void LoadMenu()
+    System.Collections.IEnumerator ShowVictorySequence()
     {
+        yield return new WaitForSeconds(0.5f);
+
+        if (audioSource != null && victorySound != null)
+            audioSource.PlayOneShot(victorySound);
+
+ if (confettiParticles != null)
+    {
+        confettiParticles.Stop(); 
+        confettiParticles.Clear(); 
+        confettiParticles.Play(); 
+    }
+
+        if (victoryPanel != null)
+        {
+            victoryPanel.SetActive(true);
+            victoryPanel.transform.localScale = Vector3.zero;
+
+            float timer = 0;
+            while (timer < 0.5f)
+            {
+                timer += Time.deltaTime;
+                victoryPanel.transform.localScale = Vector3.Lerp(Vector3.zero, Vector3.one, timer / 0.5f);
+                yield return null;
+            }
+        }
+
+        yield return new WaitForSeconds(delayBeforeLoading);
         SceneManager.LoadScene(finalMenuSceneName);
     }
 }

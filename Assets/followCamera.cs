@@ -1,41 +1,82 @@
 using UnityEngine;
 
-public class FollowCamera : MonoBehaviour
+public class followCamera : MonoBehaviour
 {
     [Header("Objetivo")]
-    public Transform target; 
+    public Transform target;
 
-    [Header("Configuración de Seguimiento")]
-    public float smoothSpeed = 10f; 
-    public Vector3 offset = new Vector3(0, 1, -10); 
-
-    // --- ¡NUEVAS VARIABLES! ---
-    [Header("Límites de la Cámara")]
-    public float minX; // El borde izquierdo
-    public float maxX; // El borde derecho
+    [Header("Suavizado")]
+    public float smoothSpeed = 5f; 
     
+    [Header("Look Ahead (Mirar Adelante)")]
+    public float lookAheadDistance = 3f; // Qué tan lejos se adelanta la cámara
+    public float lookAheadSpeed = 2f;    // Qué tan rápido cambia de lado
+    private float currentLookOffset;
+
+    [Header("Límites del Mapa")]
+    public bool useLimits = false;
+    public float minX;
+    public float maxX;
+
+    // Variables internas
     private float fixedY;
+    private float lastXPos;
 
     void Start()
     {
-        fixedY = transform.position.y + offset.y;
+        if (target == null) return;
+
+        // Guardamos la altura inicial de la cámara para no moverla en Y
+        fixedY = transform.position.y;
+        lastXPos = target.position.x;
     }
 
-    void LateUpdate ()
+    void Update()
     {
-        if (target == null)
+        if (target == null) return;
+
+        // 1. DETECTAR DIRECCIÓN
+        // Comparamos la posición actual con la del frame anterior
+        float xDifference = target.position.x - lastXPos;
+        
+        float targetOffset = 0;
+
+        // Si se mueve a la derecha (diferencia positiva)
+        if (xDifference > 0.01f)
         {
-            return;
+            targetOffset = lookAheadDistance;
+        }
+        // Si se mueve a la izquierda (diferencia negativa)
+        else if (xDifference < -0.01f)
+        {
+            targetOffset = -lookAheadDistance;
+        }
+        else
+        {
+            // Si está quieto, mantenemos el último offset para que la cámara no se centre de golpe
+            targetOffset = currentLookOffset;
         }
 
-        Vector3 desiredPosition = target.position + offset;
-        Vector3 smoothedPosition = Vector3.Lerp(transform.position, desiredPosition, smoothSpeed * Time.deltaTime);
-        
-        // --- ¡NUEVA LÍNEA! ---
-        // Sujeta la posición X entre los límites minX y maxX
-        smoothedPosition.x = Mathf.Clamp(smoothedPosition.x, minX, maxX);
+        // Actualizamos la posición anterior para el siguiente frame
+        lastXPos = target.position.x;
 
-        // Aplicamos la X sujetada y la Y fija
-        transform.position = new Vector3(smoothedPosition.x, fixedY, transform.position.z);
+        // 2. SUAVIZAR EL CAMBIO DE LADO
+        // Esto hace que la cámara se deslice suavemente de izquierda a derecha
+        currentLookOffset = Mathf.Lerp(currentLookOffset, targetOffset, lookAheadSpeed * Time.deltaTime);
+
+        // 3. CALCULAR POSICIÓN DESEADA
+        // Posición del jugador + el adelanto calculado
+        Vector3 desiredPosition = new Vector3(target.position.x + currentLookOffset, fixedY, transform.position.z);
+
+        // 4. APLICAR LÍMITES (Si están activados)
+        if (useLimits)
+        {
+            // El Clamp evita que la cámara pase de los bordes minX y maxX
+            desiredPosition.x = Mathf.Clamp(desiredPosition.x, minX, maxX);
+        }
+
+        // 5. MOVER LA CÁMARA
+        // Usamos Lerp para mover la cámara suavemente hacia la posición deseada
+        transform.position = Vector3.Lerp(transform.position, desiredPosition, smoothSpeed * Time.deltaTime);
     }
 }
