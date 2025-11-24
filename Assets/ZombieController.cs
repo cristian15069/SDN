@@ -277,6 +277,12 @@ public class ZombieController : MonoBehaviour
         {
             Instantiate(deathEffectPrefab, transform.position, Quaternion.identity);
         }
+
+        kaiAnimation player = FindObjectOfType<kaiAnimation>(); 
+        if (player != null)
+        {
+            player.AddKill(); 
+        }
         
         Destroy(gameObject, 3f); 
     }

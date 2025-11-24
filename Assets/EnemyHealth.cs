@@ -2,8 +2,8 @@ using UnityEngine;
 
 public class EnemyHealth : MonoBehaviour
 {
-    public int currentHealth;
     public int maxHealth = 3;
+    private int currentHealth;
 
     void Start()
     {
@@ -13,10 +13,6 @@ public class EnemyHealth : MonoBehaviour
     public void TakeDamage(int damageAmount)
     {
         currentHealth -= damageAmount;
-        Debug.Log(gameObject.name + " ha recibido " + damageAmount + " de daño. Salud restante: " + currentHealth);
-
-        // Aquí puedes añadir un efecto visual de daño (parpadeo, etc.)
-        // anim.SetTrigger("Hit"); 
 
         if (currentHealth <= 0)
         {
@@ -26,7 +22,13 @@ public class EnemyHealth : MonoBehaviour
 
     void Die()
     {
-        Debug.Log(gameObject.name + " ha sido derrotado.");
+        kaiAnimation player = FindFirstObjectByType<kaiAnimation>();
+
+        if (player != null)
+        {
+            player.AddKill();
+        }
+
         Destroy(gameObject);
     }
 }
