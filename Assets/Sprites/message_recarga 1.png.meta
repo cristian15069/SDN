@@ -1,10 +1,10 @@
 fileFormatVersion: 2
-guid: aaa6f9bcfba9dfb4b9501dfd6722298d
+guid: 73176d34acaed0a4c9a36402aec68b53
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: 1177886583810276161
-    second: change-button_0
+      213: -5754645110466373850
+    second: message_recarga 1_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -113,23 +113,23 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: change-button_0
+      name: message_recarga 1_0
       rect:
         serializedVersion: 2
-        x: 80
-        y: 132
-        width: 369
-        height: 262
+        x: 6
+        y: 0
+        width: 493
+        height: 493
       alignment: 0
-      pivot: {x: 0.5, y: 0.5}
+      pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 14bb5b57b91b85010800000000000000
-      internalID: 1177886583810276161
+      spriteID: 627963ee2c46320b0800000000000000
+      internalID: -5754645110466373850
       vertices: []
       indices: 
       edges: []
@@ -138,7 +138,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: ed1615f953b87d240b253e671d40de90
+    spriteID: 
     internalID: 0
     vertices: []
     indices: 
@@ -148,7 +148,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      change-button_0: 1177886583810276161
+      message_recarga 1_0: -5754645110466373850
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

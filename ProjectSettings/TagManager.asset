@@ -17,8 +17,8 @@ TagManager:
   - player
   - Enemy
   - victory
+  - pausa
   - confetti
-  - 
   - 
   - 
   - 
@@ -83,6 +83,9 @@ TagManager:
     locked: 0
   - name: button
     uniqueID: 556185983
+    locked: 0
+  - name: pause
+    uniqueID: 2998139309
     locked: 0
   - name: victory
     uniqueID: 1505025433

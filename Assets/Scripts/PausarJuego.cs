@@ -4,134 +4,130 @@ using UnityEngine.SceneManagement;
 
 public class PausarJuego : MonoBehaviour
 {
-    [Header("Referencias UI")]
+    [Header("Referencias OBLIGATORIAS")]
     public GameObject menuPausa;
-    public Button botonPausa;
-    
-    [Header("Controles Teclado")]
+    public RectTransform botonPausaRect; // Arrastra tu botón aquí
+    public Canvas myCanvas;              // Arrastra tu Canvas aquí
+
+    [Header("Teclas")]
+    public KeyCode teclaPausa = KeyCode.Escape;
     public KeyCode teclaReanudar = KeyCode.R;
-    public KeyCode teclaSalir = KeyCode.Q;
     public KeyCode teclaReiniciar = KeyCode.T;
     public KeyCode teclaMenuPrincipal = KeyCode.M;
-    public KeyCode teclaPausa = KeyCode.Escape;
+    public KeyCode teclaSalir = KeyCode.Q;
+
+    public string nombreMenuPrincipal = "MenuInicial";
     
-    [Header("Nombres de Escenas")]
-    public string nombreMenuPrincipal = "Menu";
-    
-    [SerializeField] private bool juegoPausado = false;
+    private bool juegoPausado = false;
+    private Camera canvasCamera;
 
     private void Start()
     {
-        if (botonPausa != null)
-            botonPausa.onClick.AddListener(Pausar);
+        // 1. FUERZA BRUTA: El mouse debe verse SIEMPRE al iniciar
+        Cursor.lockState = CursorLockMode.None; 
+        Cursor.visible = true; 
 
         if (menuPausa != null)
             menuPausa.SetActive(false);
+
+        // Configuración de cámara para detectar clicks
+        if (myCanvas != null)
+        {
+            if (myCanvas.renderMode == RenderMode.ScreenSpaceOverlay)
+                canvasCamera = null;
+            else
+                canvasCamera = myCanvas.worldCamera;
+        }
     }
 
     private void Update()
     {
-        ProcesarInputTeclado();
+        // 2. SEGURIDAD: Si por alguna razón el mouse se esconde, lo mostramos de nuevo
+        if (Cursor.visible == false) 
+        {
+            Cursor.visible = true;
+            Cursor.lockState = CursorLockMode.None;
+        }
+
+        // --- DETECCIÓN MANUAL DEL CLIC ---
+        if (Input.GetMouseButtonDown(0))
+        {
+            if (!juegoPausado)
+            {
+                if (CheckTouchOnRect(Input.mousePosition, botonPausaRect))
+                {
+                    Pausar();
+                }
+            }
+        }
+        // ---------------------------------
+
+        if (Input.GetKeyDown(teclaPausa)) TogglePausa();
+
+        if (juegoPausado)
+        {
+            if (Input.GetKeyDown(teclaReanudar)) Reanudar();
+            if (Input.GetKeyDown(teclaReiniciar)) ReiniciarNivel();
+            if (Input.GetKeyDown(teclaMenuPrincipal)) SalirAlMenuPrincipal();
+            if (Input.GetKeyDown(teclaSalir)) SalirDelJuego();
+        }
     }
 
-    private void ProcesarInputTeclado()
+    bool CheckTouchOnRect(Vector2 touchPosition, RectTransform rect)
     {
-        if (Input.GetKeyDown(teclaPausa))
-        {
-            TogglePausa();
-        }
-
-        if (!juegoPausado) return;
-
-        if (Input.GetKeyDown(teclaReanudar))
-        {
-            Reanudar();
-        }
-        
-        if (Input.GetKeyDown(teclaReiniciar))
-        {
-            ReiniciarNivel();
-        }
-        
-        if (Input.GetKeyDown(teclaMenuPrincipal))
-        {
-            SalirAlMenuPrincipal();
-        }
-        
-        if (Input.GetKeyDown(teclaSalir))
-        {
-            SalirDelJuego();
-        }
+        if (rect == null || !rect.gameObject.activeInHierarchy) return false;
+        return RectTransformUtility.RectangleContainsScreenPoint(rect, touchPosition, canvasCamera);
     }
 
     public void TogglePausa()
     {
-        if (juegoPausado)
-        {
-            Reanudar();
-        }
-        else
-        {
-            Pausar();
-        }
-    }
-
-    public void Reanudar()
-    {
-        if (menuPausa != null)
-            menuPausa.SetActive(false);
-            
-        Time.timeScale = 1f;
-        juegoPausado = false;
-        Debug.Log("Juego reanudado!");
+        if (juegoPausado) Reanudar();
+        else Pausar();
     }
 
     public void Pausar()
     {
-        if (menuPausa != null)
-            menuPausa.SetActive(true);
-            
-        Time.timeScale = 0f;
+        if (menuPausa != null) menuPausa.SetActive(true);
+
+        Time.timeScale = 0f; 
         juegoPausado = true;
-        Debug.Log("Juego pausado!");
+        
+        // Aseguramos mouse visible
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
+    }
+
+    public void Reanudar()
+    {
+        if (menuPausa != null) menuPausa.SetActive(false);
+
+        Time.timeScale = 1f; 
+        juegoPausado = false;
+
+        // IMPORTANTE: Ya NO escondemos el mouse aquí. 
+        // Se quedará visible para que no tengas problemas.
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
     }
 
     public void ReiniciarNivel()
     {
-        Debug.Log("Reiniciando nivel...");
-        
         Time.timeScale = 1f;
-        juegoPausado = false;
-        
         SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
     }
 
     public void SalirAlMenuPrincipal()
     {
-        Debug.Log("Saliendo al menú principal...");
-        
         Time.timeScale = 1f;
-        juegoPausado = false;
-        
-        if (!string.IsNullOrEmpty("MenuInicial"))
-        {
-            SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex - 1);
-        }
-        else
-        {
-            Debug.LogError("Nombre del menú principal no asignado!");
-        }
+        SceneManager.LoadScene(nombreMenuPrincipal);
     }
 
     public void SalirDelJuego()
     {
-        Debug.Log("Saliendo del juego...");
-        
         Time.timeScale = 1f;
         Application.Quit();
-        
         #if UNITY_EDITOR
         UnityEditor.EditorApplication.isPlaying = false;
         #endif
     }
-}
+} 

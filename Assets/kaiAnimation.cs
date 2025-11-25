@@ -218,9 +218,9 @@ public class kaiAnimation : MonoBehaviour
     {
         if (killCounterUI != null)
         {
-            if (isAbilityActive) killCounterUI.text = "¡ACTIVO!";
-            else if (isAbilityReady) killCounterUI.text = "CARGA ILIMITADA! (PRECIONA R)";
-            else killCounterUI.text = currentKills + "/" + killsToReady;
+            if (isAbilityActive) killCounterUI.text = "¡CARGA ILIMITADA ACTIVA POR 5S!";
+            else if (isAbilityReady) killCounterUI.text = "CARGA ILIMITADA!";
+            else killCounterUI.text = "Zombies Desactivados: " + currentKills + "/" + killsToReady;
         }
     }
 
